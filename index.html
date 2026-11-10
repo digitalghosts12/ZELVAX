@@ -9,11 +9,13 @@
 html,body{height:100%;background:#0f1117;color:#e8eaf0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
-header{display:flex;justify-content:flex-end;gap:8px;padding:10px;flex-wrap:wrap}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:10px}
+.hr{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn{background:#1d2130;border:1px solid #2c3247;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
 .btn.primary{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
 .btn.danger{background:#c0392b;border-color:#c0392b;color:#fff}
 .btn:active{opacity:.7}
+#btnMenu{font-size:18px;padding:6px 14px;line-height:1.2}
 .hero{text-align:center;padding:4px 14px 12px}
 .logo{font-size:40px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,#a29bfe,#6c5ce7,#fd79a8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .search{display:flex;max-width:560px;margin:10px auto 0;background:#1d2130;border:1px solid #2c3247;border-radius:999px;overflow:hidden}
@@ -55,8 +57,11 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <body>
 
 <header>
-  <button class="btn" id="btnMine">Sitelerim</button>
-  <button class="btn primary" id="btnCreate">Site Oluştur</button>
+  <button class="btn" id="btnMenu" aria-label="Menü">☰</button>
+  <div class="hr">
+    <button class="btn" id="btnMine">Sitelerim</button>
+    <button class="btn primary" id="btnCreate">Site Oluştur</button>
+  </div>
 </header>
 
 <div class="hero">
@@ -74,6 +79,28 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
   <div class="grid" id="grid"></div>
 </main>
 
+<!-- Menü -->
+<div class="modal" id="mMenu"><div class="box">
+  <h3>Menü</h3>
+  <div class="hint" id="menuName" style="margin:0 0 6px"></div>
+  <div class="row" style="margin-top:6px">
+    <button class="btn primary" id="btnRename">Kullanıcı ismini değiştir</button>
+  </div>
+</div></div>
+
+<!-- Kullanıcı ismini değiştir -->
+<div class="modal" id="mName"><div class="box">
+  <h3>Kullanıcı ismini değiştir</h3>
+  <label>Kullanıcı adı</label>
+  <input id="nName" maxlength="20" placeholder="kullanici_adi" autocomplete="off">
+  <div class="hint">3-20 karakter. Boşluk olmadan harf, rakam, _ . - kullanılabilir. Sitelerinde bu isim görünür.</div>
+  <div class="err" id="nErr"></div>
+  <div class="row">
+    <button class="btn primary" id="nSave">Kaydet</button>
+  </div>
+</div></div>
+
+<!-- Site oluştur / düzenle -->
 <div class="modal" id="mEdit"><div class="box">
   <h3 id="eTitle">Site Oluştur</h3>
   <label>Site adı</label>
@@ -90,22 +117,25 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
   </div>
 </div></div>
 
+<!-- Sitelerim -->
 <div class="modal" id="mMine"><div class="box">
   <h3>Sitelerim</h3>
   <div id="mineList"></div>
 </div></div>
 
+<!-- Site görüntüleyici -->
 <div id="viewer">
   <button id="vreport">⚑ Bildir</button>
   <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
 </div>
 
+<!-- Tek kapat tuşu: her açık ekranın sol üstünde -->
 <button class="x" id="xbtn" aria-label="Kapat">✕</button>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,getDocs,addDoc,query,orderBy,limit,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,doc,getDoc,getDocs,addDoc,query,where,orderBy,limit,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC2mGkU1ZgjKPsvZ6piME4a0fLl2fhCVbk",
@@ -119,14 +149,17 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 const CATS = ["Araba","Korku","Mafya","Oyun","Film","Müzik","Haber","Eğitim","Alışveriş","Sosyal","Teknoloji","Spor","Sanat","Diğer"];
-let user = null, all = [], activeCat = "Hepsi", editing = null;
+let user = null, myName = null, nameP = Promise.resolve(), all = [], activeCat = "Hepsi", editing = null, afterName = null;
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const keyOf = s => s.trim().toLocaleLowerCase("tr").replace(/\s+/g,"-");
 const validKey = k => /^[a-z0-9ğüşöçı_-]{2,40}$/.test(k);
+const nameKey = s => s.trim().toLowerCase();
+const validName = k => /^[a-z0-9ğüşöçı][a-z0-9ğüşöçı_.-]{2,19}$/.test(k);
 const base = () => location.origin + location.pathname;
 const linkOf = k => base() + "#" + encodeURIComponent(k);
 
+/* ---------- Kapat (X) yönetimi ---------- */
 let closer = null;
 function showX(fn){ closer = fn; $("xbtn").classList.add("show"); }
 function hideX(){ closer = null; $("xbtn").classList.remove("show"); }
@@ -134,6 +167,7 @@ $("xbtn").onclick = () => { if(closer) closer(); };
 function openModal(id){ $(id).classList.add("open"); showX(() => closeModal(id)); }
 function closeModal(id){ $(id).classList.remove("open"); hideX(); }
 
+/* ---------- Kategoriler / liste ---------- */
 $("eCat").innerHTML = CATS.map(c => `<option>${c}</option>`).join("");
 function drawChips(){
   $("chips").innerHTML = ["Hepsi",...CATS].map(c => `<div class="chip ${c===activeCat?"on":""}" data-c="${c}">${c}</div>`).join("");
@@ -162,6 +196,7 @@ async function load(){
   render();
 }
 
+/* ---------- Arama ---------- */
 $("searchForm").onsubmit = async e => {
   e.preventDefault();
   const v = $("q").value.trim();
@@ -175,13 +210,77 @@ $("searchForm").onsubmit = async e => {
 };
 $("q").oninput = render;
 
-onAuthStateChanged(auth, u => { user = u; });
+/* ---------- Giriş (butonsuz: gerektiğinde otomatik açılır) ---------- */
+async function loadMyName(){
+  try{ const d = await getDoc(doc(db,"users",user.uid)); myName = d.exists() ? d.data().name : null; }
+  catch(e){ myName = null; }
+}
+onAuthStateChanged(auth, u => {
+  const changed = !user || !u || user.uid !== u.uid;
+  user = u;
+  if(changed){ myName = null; nameP = u ? loadMyName() : Promise.resolve(); }
+});
 async function needLogin(){
-  if(user) return true;
-  try{ await signInWithPopup(auth,new GoogleAuthProvider()); return true; }
-  catch(e){ alert("Devam etmek için giriş gerekli: "+e.message); return false; }
+  if(!user){
+    try{
+      const r = await signInWithPopup(auth,new GoogleAuthProvider());
+      user = r.user; myName = null; nameP = loadMyName();
+    }catch(e){ alert("Devam etmek için giriş gerekli: "+e.message); return false; }
+  }
+  await nameP;
+  return true;
 }
 
+/* ---------- Menü / kullanıcı adı ---------- */
+$("btnMenu").onclick = () => {
+  $("menuName").textContent = myName ? "Kullanıcı adın: " + myName : "";
+  openModal("mMenu");
+};
+function openNameModal(after){
+  afterName = after || null;
+  $("nName").value = myName || "";
+  $("nErr").textContent = "";
+  openModal("mName");
+}
+$("btnRename").onclick = async () => {
+  if(!(await needLogin())) return;
+  closeModal("mMenu");
+  openNameModal(null);
+};
+$("nSave").onclick = async () => {
+  const raw = $("nName").value.trim(), key = nameKey(raw);
+  const err = m => $("nErr").textContent = m;
+  if(!validName(key)) return err("Kullanıcı adı 3-20 karakter olmalı; boşluk olmadan harf, rakam, _ . - kullanılabilir.");
+  if(!user) return err("Önce giriş yapmalısın.");
+  const oldKey = myName ? nameKey(myName) : null;
+  if(myName && raw === myName){ closeModal("mName"); return; }
+  $("nSave").disabled = true; err("");
+  try{
+    const ex = await getDoc(doc(db,"usernames",key));
+    if(ex.exists() && ex.data().uid !== user.uid){
+      err("Bu kullanıcı adı zaten alınmış. Başka bir ad dene.");
+      $("nSave").disabled = false; return;
+    }
+    const b = writeBatch(db);
+    if(ex.exists()) b.update(doc(db,"usernames",key), {name:raw});
+    else b.set(doc(db,"usernames",key), {uid:user.uid, name:raw});
+    if(oldKey && oldKey !== key) b.delete(doc(db,"usernames",oldKey));
+    b.set(doc(db,"users",user.uid), {name:raw, key});
+    const mine = await getDocs(query(collection(db,"sites"), where("owner","==",user.uid)));
+    mine.docs.slice(0,480).forEach(d => b.update(d.ref, {ownerName:raw}));
+    await b.commit();
+    myName = raw;
+    const cb = afterName; afterName = null;
+    closeModal("mName");
+    await load();
+    if(cb) cb();
+  }catch(e){
+    err(/permission/i.test(e.message) ? "Bu kullanıcı adı alınmış olabilir ya da kurallar eksik. Başka bir ad dene." : e.message);
+  }
+  $("nSave").disabled = false;
+};
+
+/* ---------- Oluştur / düzenle ---------- */
 function openEdit(site){
   editing = site || null;
   $("eTitle").textContent = site ? "Site Ayarları" : "Site Oluştur";
@@ -195,7 +294,11 @@ function openEdit(site){
 }
 function updLink(){ const k = keyOf($("eName").value); $("eLink").textContent = k ? "Bağlantı: " + linkOf(k) : ""; }
 $("eName").oninput = updLink;
-$("btnCreate").onclick = async () => { if(await needLogin()) openEdit(null); };
+$("btnCreate").onclick = async () => {
+  if(!(await needLogin())) return;
+  if(!myName){ openNameModal(() => openEdit(null)); return; }
+  openEdit(null);
+};
 
 $("eSave").onclick = async () => {
   const name = $("eName").value.trim(), key = keyOf(name), code = $("eCode").value, category = $("eCat").value;
@@ -204,15 +307,16 @@ $("eSave").onclick = async () => {
   if(!code.trim()) return err("Kod boş olamaz.");
   if(code.length > 900000) return err("Kod çok uzun (en fazla ~900 KB).");
   if(!(await needLogin())) return;
+  const owner = myName || user.displayName || "Anonim";
   $("eSave").disabled = true; err("");
   try{
     const b = writeBatch(db);
     if(!editing){
-      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:user.displayName||"Anonim",createdAt:serverTimestamp()});
+      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:owner,createdAt:serverTimestamp()});
     }else if(editing.key === key){
       b.update(doc(db,"sites",key), {name,category,code});
     }else{
-      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:user.displayName||"Anonim",createdAt:editing.createdAt||serverTimestamp()});
+      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:owner,createdAt:editing.createdAt||serverTimestamp()});
       b.delete(doc(db,"sites",editing.key));
     }
     await b.commit();
@@ -231,6 +335,7 @@ $("eDel").onclick = async () => {
   closeModal("mEdit"); editing = null; await load(); drawMine(); openModal("mMine");
 };
 
+/* ---------- Sitelerim ---------- */
 function drawMine(){
   const mine = all.filter(s => user && s.owner === user.uid);
   $("mineList").innerHTML = mine.length ? mine.map(s => `
@@ -246,6 +351,7 @@ function drawMine(){
 }
 $("btnMine").onclick = async () => { if(await needLogin()){ await load(); drawMine(); openModal("mMine"); } };
 
+/* ---------- Site görüntüleyici (tam ekran) ---------- */
 async function openSite(key){
   key = decodeURIComponent(key);
   let s = all.find(x => x.key===key);
