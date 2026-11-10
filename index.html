@@ -68,7 +68,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </header>
 
 <div class="hero">
-<div class="logo">Velora</div>
+<div class="logo">ZELVAX</div>
 <form class="search" id="searchForm">
 <input id="q" placeholder="Ne arıyorsun? İstediğin gibi yaz..." autocomplete="off">
 <button type="submit">Ara</button>
@@ -184,7 +184,6 @@ const linkOf=k=>base()+"#"+encodeURIComponent(k);
    ÜCRETSİZ OTOMATİK İÇERİK ANALİZİ
 ===================================== */
 
-// HTML kodundan görünür metinleri çıkarır.
 function extractContent(code){
 
 try{
@@ -428,7 +427,6 @@ score+=5;
 found=true;
 }
 
-// Eş anlamlı kelime kontrolü
 if(!found){
 
 const related=synonymMap.get(token);
@@ -453,7 +451,6 @@ if(found) matched++;
 
 }
 
-// Genişletilmiş sorguyla ek eşleşmeler
 for(const token of queryExpanded){
 
 if(!qTokens.includes(token)&&index.expanded.includes(token)){
@@ -462,7 +459,6 @@ score+=0.7;
 
 }
 
-// Birden fazla kelime eşleşmesini ödüllendir
 const coverage=matched/qTokens.length;
 
 score*=0.5+coverage;
@@ -1236,4 +1232,4 @@ load().then(route);
 
 </script>
 </body>
-  </html>
+   </html>
