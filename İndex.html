@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Velora</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0f1117;color:#e8eaf0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;justify-content:flex-end;gap:8px;padding:10px;flex-wrap:wrap}
+.btn{background:#1d2130;border:1px solid #2c3247;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
+.btn.primary{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+.btn.danger{background:#c0392b;border-color:#c0392b;color:#fff}
+.btn:active{opacity:.7}
+.hero{text-align:center;padding:4px 14px 12px}
+.logo{font-size:40px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,#a29bfe,#6c5ce7,#fd79a8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.search{display:flex;max-width:560px;margin:10px auto 0;background:#1d2130;border:1px solid #2c3247;border-radius:999px;overflow:hidden}
+.search input{flex:1;background:none;border:0;outline:0;padding:12px 18px;font-size:16px;min-width:0}
+.search button{background:#6c5ce7;border:0;padding:0 20px;cursor:pointer;color:#fff}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:0 12px 8px;scrollbar-width:none}
+.chip{flex:none;padding:6px 12px;border-radius:999px;background:#1d2130;border:1px solid #2c3247;font-size:13px;cursor:pointer}
+.chip.on{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
+main{flex:1;overflow-y:auto;padding:4px 12px calc(16px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.card{background:#171a26;border:1px solid #262b3d;border-radius:12px;padding:12px;cursor:pointer}
+.card:hover{border-color:#6c5ce7}
+.card .n{font-weight:700;font-size:16px;word-break:break-all}
+.card .l{font-size:12px;color:#7f8bff;margin:2px 0 6px;word-break:break-all}
+.card .m{font-size:12px;color:#9aa0b4;display:flex;justify-content:space-between;gap:6px}
+.empty{color:#7a8097;text-align:center;padding:30px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:12px;z-index:50}
+.modal.open{display:flex}
+.box{background:#171a26;border:1px solid #2c3247;border-radius:14px;padding:16px;padding-top:60px;width:100%;max-width:560px;max-height:92dvh;overflow-y:auto}
+.box h3{margin-bottom:12px}
+.box label{display:block;font-size:13px;color:#9aa0b4;margin:10px 0 4px}
+.box input,.box select,.box textarea{width:100%;background:#0f1117;border:1px solid #2c3247;border-radius:8px;padding:10px;outline:0}
+.box textarea{height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;resize:vertical}
+.row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.hint{font-size:12px;color:#7a8097;margin-top:4px;word-break:break-all}
+.err{color:#ff7675;font-size:13px;margin-top:8px;min-height:16px}
+.mine{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #262b3d}
+.mine .n{font-weight:700;word-break:break-all}
+.mine .l{font-size:12px;color:#7f8bff;word-break:break-all}
+.x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:200;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.x.show{display:flex}
+#viewer{position:fixed;inset:0;background:#fff;z-index:100;display:none}
+#viewer.open{display:block}
+#viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+#vreport{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;border-radius:12px;padding:8px 14px;cursor:pointer;font-size:14px;backdrop-filter:blur(3px)}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="btn" id="btnMine">Sitelerim</button>
+  <button class="btn primary" id="btnCreate">Site Oluştur</button>
+</header>
+
+<div class="hero">
+  <div class="logo">Velora</div>
+  <form class="search" id="searchForm">
+    <input id="q" placeholder="Site ara veya bağlantı yapıştır..." autocomplete="off">
+    <button type="submit">Ara</button>
+  </form>
+</div>
+
+<div class="chips" id="chips"></div>
+
+<main>
+  <h2 id="listTitle">Keşfet</h2>
+  <div class="grid" id="grid"></div>
+</main>
+
+<div class="modal" id="mEdit"><div class="box">
+  <h3 id="eTitle">Site Oluştur</h3>
+  <label>Site adı</label>
+  <input id="eName" maxlength="40" placeholder="ornek-site">
+  <div class="hint" id="eLink"></div>
+  <label>Kategori</label>
+  <select id="eCat"></select>
+  <label>Kod (HTML, CSS, JavaScript – tek dosya)</label>
+  <textarea id="eCode" placeholder="<h1>Merhaba</h1>"></textarea>
+  <div class="err" id="eErr"></div>
+  <div class="row">
+    <button class="btn primary" id="eSave">Kaydet</button>
+    <button class="btn danger" id="eDel" style="display:none">Siteyi Sil</button>
+  </div>
+</div></div>
+
+<div class="modal" id="mMine"><div class="box">
+  <h3>Sitelerim</h3>
+  <div id="mineList"></div>
+</div></div>
+
+<div id="viewer">
+  <button id="vreport">⚑ Bildir</button>
+  <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+</div>
+
+<button class="x" id="xbtn" aria-label="Kapat">✕</button>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,getDocs,addDoc,query,orderBy,limit,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC2mGkU1ZgjKPsvZ6piME4a0fLl2fhCVbk",
+  authDomain: "velora-b84fe.firebaseapp.com",
+  projectId: "velora-b84fe",
+  appId: "1:117334379566:web:d2accf78595b898e5023bf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const CATS = ["Araba","Korku","Mafya","Oyun","Film","Müzik","Haber","Eğitim","Alışveriş","Sosyal","Teknoloji","Spor","Sanat","Diğer"];
+let user = null, all = [], activeCat = "Hepsi", editing = null;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const keyOf = s => s.trim().toLocaleLowerCase("tr").replace(/\s+/g,"-");
+const validKey = k => /^[a-z0-9ğüşöçı_-]{2,40}$/.test(k);
+const base = () => location.origin + location.pathname;
+const linkOf = k => base() + "#" + encodeURIComponent(k);
+
+let closer = null;
+function showX(fn){ closer = fn; $("xbtn").classList.add("show"); }
+function hideX(){ closer = null; $("xbtn").classList.remove("show"); }
+$("xbtn").onclick = () => { if(closer) closer(); };
+function openModal(id){ $(id).classList.add("open"); showX(() => closeModal(id)); }
+function closeModal(id){ $(id).classList.remove("open"); hideX(); }
+
+$("eCat").innerHTML = CATS.map(c => `<option>${c}</option>`).join("");
+function drawChips(){
+  $("chips").innerHTML = ["Hepsi",...CATS].map(c => `<div class="chip ${c===activeCat?"on":""}" data-c="${c}">${c}</div>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(el => el.onclick = () => { activeCat = el.dataset.c; drawChips(); render(); });
+}
+drawChips();
+
+function render(){
+  const raw = $("q").value.trim(), term = raw.toLocaleLowerCase("tr");
+  const list = all.filter(s => (activeCat==="Hepsi"||s.category===activeCat) &&
+    (!term || s.key.includes(keyOf(term)) || s.name.toLocaleLowerCase("tr").includes(term) || (s.ownerName||"").toLocaleLowerCase("tr").includes(term)));
+  $("listTitle").textContent = term ? `"${raw}" için sonuçlar` : "Keşfet";
+  $("grid").innerHTML = list.length ? list.map(s => `
+    <div class="card" data-k="${esc(s.key)}">
+      <div class="n">${esc(s.name)}</div>
+      <div class="l">${esc(linkOf(s.key))}</div>
+      <div class="m"><span>👤 ${esc(s.ownerName||"Anonim")}</span><span>${esc(s.category)}</span></div>
+    </div>`).join("") : `<div class="empty">Site bulunamadı.</div>`;
+  $("grid").querySelectorAll(".card").forEach(el => el.onclick = () => location.hash = el.dataset.k);
+}
+async function load(){
+  try{
+    const snap = await getDocs(query(collection(db,"sites"), orderBy("createdAt","desc"), limit(300)));
+    all = snap.docs.map(d => ({key:d.id, ...d.data()}));
+  }catch(e){ $("grid").innerHTML = `<div class="empty">Siteler yüklenemedi: ${esc(e.message)}</div>`; return; }
+  render();
+}
+
+$("searchForm").onsubmit = async e => {
+  e.preventDefault();
+  const v = $("q").value.trim();
+  if(v.includes("#")){ location.hash = v.split("#")[1]; return; }
+  render();
+  const k = keyOf(v);
+  if(validKey(k) && !all.some(s => s.key===k)){
+    const d = await getDoc(doc(db,"sites",k)).catch(()=>null);
+    if(d && d.exists()){ all.unshift({key:d.id,...d.data()}); render(); }
+  }
+};
+$("q").oninput = render;
+
+onAuthStateChanged(auth, u => { user = u; });
+async function needLogin(){
+  if(user) return true;
+  try{ await signInWithPopup(auth,new GoogleAuthProvider()); return true; }
+  catch(e){ alert("Devam etmek için giriş gerekli: "+e.message); return false; }
+}
+
+function openEdit(site){
+  editing = site || null;
+  $("eTitle").textContent = site ? "Site Ayarları" : "Site Oluştur";
+  $("eName").value = site ? site.name : "";
+  $("eCat").value = site ? site.category : CATS[0];
+  $("eCode").value = site ? site.code : "";
+  $("eDel").style.display = site ? "" : "none";
+  $("eErr").textContent = "";
+  updLink();
+  openModal("mEdit");
+}
+function updLink(){ const k = keyOf($("eName").value); $("eLink").textContent = k ? "Bağlantı: " + linkOf(k) : ""; }
+$("eName").oninput = updLink;
+$("btnCreate").onclick = async () => { if(await needLogin()) openEdit(null); };
+
+$("eSave").onclick = async () => {
+  const name = $("eName").value.trim(), key = keyOf(name), code = $("eCode").value, category = $("eCat").value;
+  const err = m => $("eErr").textContent = m;
+  if(!validKey(key)) return err("Ad 2-40 karakter olmalı; harf, rakam, - ve _ kullanılabilir.");
+  if(!code.trim()) return err("Kod boş olamaz.");
+  if(code.length > 900000) return err("Kod çok uzun (en fazla ~900 KB).");
+  if(!(await needLogin())) return;
+  $("eSave").disabled = true; err("");
+  try{
+    const b = writeBatch(db);
+    if(!editing){
+      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:user.displayName||"Anonim",createdAt:serverTimestamp()});
+    }else if(editing.key === key){
+      b.update(doc(db,"sites",key), {name,category,code});
+    }else{
+      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:user.displayName||"Anonim",createdAt:editing.createdAt||serverTimestamp()});
+      b.delete(doc(db,"sites",editing.key));
+    }
+    await b.commit();
+    const wasMine = $("mMine").classList.contains("open");
+    closeModal("mEdit"); editing = null;
+    await load();
+    if(wasMine){ drawMine(); openModal("mMine"); }
+  }catch(e){
+    err(/permission|exist|already/i.test(e.message) ? "Bu site adı zaten alınmış. Başka bir ad dene." : e.message);
+  }
+  $("eSave").disabled = false;
+};
+$("eDel").onclick = async () => {
+  if(!editing || !confirm("Bu site kalıcı olarak silinsin mi?")) return;
+  try{ await writeBatch(db).delete(doc(db,"sites",editing.key)).commit(); }catch(e){ return alert(e.message); }
+  closeModal("mEdit"); editing = null; await load(); drawMine(); openModal("mMine");
+};
+
+function drawMine(){
+  const mine = all.filter(s => user && s.owner === user.uid);
+  $("mineList").innerHTML = mine.length ? mine.map(s => `
+    <div class="mine"><div><div class="n">${esc(s.name)}</div><div class="l">${esc(linkOf(s.key))}</div></div>
+    <div style="display:flex;gap:6px"><button class="btn" data-o="${esc(s.key)}">Aç</button><button class="btn" data-s="${esc(s.key)}">Ayarlar</button></div></div>`).join("")
+    : `<div class="empty">Henüz sitenin yok.</div>`;
+  $("mineList").querySelectorAll("[data-o]").forEach(b => b.onclick = () => { closeModal("mMine"); location.hash = b.dataset.o; });
+  $("mineList").querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+    const s = all.find(x => x.key===b.dataset.s);
+    $("mMine").classList.remove("open"); openEdit(s);
+    showX(() => { closeModal("mEdit"); editing = null; drawMine(); openModal("mMine"); });
+  });
+}
+$("btnMine").onclick = async () => { if(await needLogin()){ await load(); drawMine(); openModal("mMine"); } };
+
+async function openSite(key){
+  key = decodeURIComponent(key);
+  let s = all.find(x => x.key===key);
+  if(!s){
+    const d = await getDoc(doc(db,"sites",key)).catch(()=>null);
+    if(d && d.exists()) s = {key:d.id,...d.data()};
+  }
+  if(!s){ alert("Site bulunamadı."); history.replaceState(null,"",location.pathname); return; }
+  $("frame").srcdoc = s.code;
+  $("viewer").classList.add("open");
+  $("viewer").dataset.k = key;
+  showX(() => { history.pushState(null,"",location.pathname); closeSite(); });
+}
+function closeSite(){ $("viewer").classList.remove("open"); $("frame").srcdoc = ""; hideX(); }
+$("vreport").onclick = async () => {
+  const reason = prompt("Bu siteyi neden bildiriyorsun?"); if(!reason) return;
+  try{ await addDoc(collection(db,"reports"), {site:$("viewer").dataset.k, reason:reason.slice(0,500), createdAt:serverTimestamp()}); alert("Bildirimin alındı."); }
+  catch(e){ alert(e.message); }
+};
+function route(){ const h = location.hash.slice(1); h ? openSite(h) : closeSite(); }
+window.addEventListener("hashchange", route);
+
+load().then(route);
+</script>
+</body>
+  </html>
