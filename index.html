@@ -54,6 +54,11 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 #viewer.open{display:block}
 #viewer iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
 #vreport{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;border-radius:12px;padding:8px 14px;cursor:pointer;font-size:14px;backdrop-filter:blur(3px)}
+
+.support-text{color:#c5c9d8;line-height:1.7;font-size:14px}
+.support-card{background:#1d2130;border:1px solid #2c3247;border-radius:12px;padding:18px;margin-top:16px;text-align:center}
+.support-title{font-size:18px;font-weight:700}
+.support-info{color:#9aa0b4;font-size:13px;margin-top:8px}
 </style>
 </head>
 
@@ -62,6 +67,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <header>
 <button class="btn" id="btnMenu">☰</button>
 <div class="hr">
+<button class="btn" id="btnMoney">Para</button>
 <button class="btn" id="btnMine">Sitelerim</button>
 <button class="btn primary" id="btnCreate">Site Oluştur</button>
 </div>
@@ -82,6 +88,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <div class="grid" id="grid"></div>
 </main>
 
+<!-- MENÜ -->
 <div class="modal" id="mMenu">
 <div class="box">
 <h3>Menü</h3>
@@ -92,6 +99,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
+<!-- KULLANICI ADI -->
 <div class="modal" id="mName">
 <div class="box">
 <h3>Kullanıcı ismini değiştir</h3>
@@ -105,6 +113,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
+<!-- SİTE DÜZENLEME -->
 <div class="modal" id="mEdit">
 <div class="box">
 <h3 id="eTitle">Site Oluştur</h3>
@@ -123,6 +132,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
+<!-- SİTELERİM -->
 <div class="modal" id="mMine">
 <div class="box">
 <h3>Sitelerim</h3>
@@ -130,6 +140,26 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
+<!-- PARA / DESTEK PENCERESİ -->
+<div class="modal" id="mSupport">
+<div class="box">
+<h3>ZELVAX'a Destek Ol</h3>
+
+<p class="support-text">
+ZELVAX'ın gelişmesine destek olmak ister misin?
+Desteğin, platformun geliştirilmesine katkı sağlayabilir.
+</p>
+
+<div class="support-card">
+<div class="support-title">Ödeme bilgileri</div>
+<p class="support-info">
+Ödeme seçeneği yakında eklenecek.
+</p>
+</div>
+</div>
+</div>
+
+<!-- TAM EKRAN GÖRÜNTÜLEYİCİ -->
 <div id="viewer">
 <button id="vreport">⚑ Bildir</button>
 <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
@@ -180,9 +210,7 @@ const base=()=>location.origin+location.pathname;
 const linkOf=k=>base()+"#"+encodeURIComponent(k);
 
 
-/* =====================================
-   ÜCRETSİZ OTOMATİK İÇERİK ANALİZİ
-===================================== */
+/* İÇERİK ANALİZİ */
 
 function extractContent(code){
 
@@ -222,9 +250,7 @@ return String(code||"").replace(/<[^>]*>/g," ").slice(0,30000);
 }
 
 
-/* =====================================
-   TÜRKÇE KELİME NORMALİZASYONU
-===================================== */
+/* TÜRKÇE KELİME NORMALİZASYONU */
 
 const stopWords=new Set([
 "ve","veya","ile","bir","bu","şu","o","da","de","mi","mı","mu","mü",
@@ -285,9 +311,7 @@ return String(text||"")
 }
 
 
-/* =====================================
-   ANLAM BENZERLİĞİ SÖZLÜĞÜ
-===================================== */
+/* ANLAM BENZERLİĞİ */
 
 const synonymGroups=[
 
@@ -354,9 +378,7 @@ return [...result];
 }
 
 
-/* =====================================
-   SİTELERİN OTOMATİK ARAMA İNDEKSİ
-===================================== */
+/* ARAMA İNDEKSİ */
 
 function getSiteContent(site){
 
@@ -388,9 +410,7 @@ expanded:expandTokens(tokenize(complete))
 }
 
 
-/* =====================================
-   AKILLI ARAMA PUANLAMASI
-===================================== */
+/* ARAMA PUANLAMASI */
 
 function searchScore(site,query){
 
@@ -486,9 +506,7 @@ _matchScore:item.score
 }
 
 
-/* =====================================
-   KAPAT BUTONU
-===================================== */
+/* KAPAT BUTONU */
 
 let closer=null;
 
@@ -517,9 +535,14 @@ hideX();
 }
 
 
-/* =====================================
-   KATEGORİLER
-===================================== */
+/* PARA BUTONU */
+
+$("btnMoney").onclick=()=>{
+openModal("mSupport");
+};
+
+
+/* KATEGORİLER */
 
 $("eCat").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
 
@@ -544,9 +567,7 @@ render();
 drawChips();
 
 
-/* =====================================
-   ARAMA SONUÇLARINI GÖSTER
-===================================== */
+/* ARAMA SONUÇLARI */
 
 function render(){
 
@@ -596,9 +617,7 @@ el.onclick=()=>location.hash=el.dataset.k;
 }
 
 
-/* =====================================
-   FIREBASE SİTELERİNİ YÜKLE
-===================================== */
+/* FIREBASE SİTELERİNİ YÜKLE */
 
 async function load(){
 
@@ -625,9 +644,7 @@ $("grid").innerHTML=
 }
 
 
-/* =====================================
-   ARAMA
-===================================== */
+/* ARAMA */
 
 $("searchForm").onsubmit=async e=>{
 
@@ -670,9 +687,7 @@ render();
 $("q").oninput=render;
 
 
-/* =====================================
-   KULLANICI GİRİŞİ
-===================================== */
+/* KULLANICI GİRİŞİ */
 
 async function loadMyName(){
 
@@ -735,9 +750,7 @@ return true;
 }
 
 
-/* =====================================
-   MENÜ VE KULLANICI ADI
-===================================== */
+/* MENÜ VE KULLANICI ADI */
 
 $("btnMenu").onclick=()=>{
 
@@ -847,9 +860,7 @@ $("nSave").disabled=false;
 };
 
 
-/* =====================================
-   SİTE OLUŞTUR / DÜZENLE
-===================================== */
+/* SİTE OLUŞTUR / DÜZENLE */
 
 function openEdit(site){
 
@@ -900,9 +911,7 @@ openEdit(null);
 };
 
 
-/* =====================================
-   SİTE KAYDET
-===================================== */
+/* SİTE KAYDET */
 
 $("eSave").onclick=async()=>{
 
@@ -1020,9 +1029,7 @@ $("eSave").disabled=false;
 };
 
 
-/* =====================================
-   SİTE SİL
-===================================== */
+/* SİTE SİL */
 
 $("eDel").onclick=async()=>{
 
@@ -1054,9 +1061,7 @@ openModal("mMine");
 };
 
 
-/* =====================================
-   SİTELERİM
-===================================== */
+/* SİTELERİM */
 
 function drawMine(){
 
@@ -1137,9 +1142,7 @@ openModal("mMine");
 };
 
 
-/* =====================================
-   TAM EKRAN SİTE GÖRÜNTÜLEYİCİ
-===================================== */
+/* TAM EKRAN SİTE GÖRÜNTÜLEYİCİ */
 
 async function openSite(key){
 
