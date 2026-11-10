@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Velora</title>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#0f1117;color:#e8eaf0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -32,6 +33,7 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 .card .n{font-weight:700;font-size:16px;word-break:break-all}
 .card .l{font-size:12px;color:#7f8bff;margin:2px 0 6px;word-break:break-all}
 .card .m{font-size:12px;color:#9aa0b4;display:flex;justify-content:space-between;gap:6px}
+.card .match{font-size:11px;color:#a29bfe;margin-top:7px}
 .empty{color:#7a8097;text-align:center;padding:30px 0}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:12px;z-index:50}
 .modal.open{display:flex}
@@ -54,327 +56,1184 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 #vreport{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:2;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;border-radius:12px;padding:8px 14px;cursor:pointer;font-size:14px;backdrop-filter:blur(3px)}
 </style>
 </head>
+
 <body>
 
 <header>
-  <button class="btn" id="btnMenu" aria-label="Menü">☰</button>
-  <div class="hr">
-    <button class="btn" id="btnMine">Sitelerim</button>
-    <button class="btn primary" id="btnCreate">Site Oluştur</button>
-  </div>
+<button class="btn" id="btnMenu">☰</button>
+<div class="hr">
+<button class="btn" id="btnMine">Sitelerim</button>
+<button class="btn primary" id="btnCreate">Site Oluştur</button>
+</div>
 </header>
 
 <div class="hero">
-  <div class="logo">Velora</div>
-  <form class="search" id="searchForm">
-    <input id="q" placeholder="Site ara veya bağlantı yapıştır..." autocomplete="off">
-    <button type="submit">Ara</button>
-  </form>
+<div class="logo">Velora</div>
+<form class="search" id="searchForm">
+<input id="q" placeholder="Ne arıyorsun? İstediğin gibi yaz..." autocomplete="off">
+<button type="submit">Ara</button>
+</form>
 </div>
 
 <div class="chips" id="chips"></div>
 
 <main>
-  <h2 id="listTitle">Keşfet</h2>
-  <div class="grid" id="grid"></div>
+<h2 id="listTitle">Keşfet</h2>
+<div class="grid" id="grid"></div>
 </main>
 
-<!-- Menü -->
-<div class="modal" id="mMenu"><div class="box">
-  <h3>Menü</h3>
-  <div class="hint" id="menuName" style="margin:0 0 6px"></div>
-  <div class="row" style="margin-top:6px">
-    <button class="btn primary" id="btnRename">Kullanıcı ismini değiştir</button>
-  </div>
-</div></div>
-
-<!-- Kullanıcı ismini değiştir -->
-<div class="modal" id="mName"><div class="box">
-  <h3>Kullanıcı ismini değiştir</h3>
-  <label>Kullanıcı adı</label>
-  <input id="nName" maxlength="20" placeholder="kullanici_adi" autocomplete="off">
-  <div class="hint">3-20 karakter. Boşluk olmadan harf, rakam, _ . - kullanılabilir. Sitelerinde bu isim görünür.</div>
-  <div class="err" id="nErr"></div>
-  <div class="row">
-    <button class="btn primary" id="nSave">Kaydet</button>
-  </div>
-</div></div>
-
-<!-- Site oluştur / düzenle -->
-<div class="modal" id="mEdit"><div class="box">
-  <h3 id="eTitle">Site Oluştur</h3>
-  <label>Site adı</label>
-  <input id="eName" maxlength="40" placeholder="ornek-site">
-  <div class="hint" id="eLink"></div>
-  <label>Kategori</label>
-  <select id="eCat"></select>
-  <label>Kod (HTML, CSS, JavaScript – tek dosya)</label>
-  <textarea id="eCode" placeholder="<h1>Merhaba</h1>"></textarea>
-  <div class="err" id="eErr"></div>
-  <div class="row">
-    <button class="btn primary" id="eSave">Kaydet</button>
-    <button class="btn danger" id="eDel" style="display:none">Siteyi Sil</button>
-  </div>
-</div></div>
-
-<!-- Sitelerim -->
-<div class="modal" id="mMine"><div class="box">
-  <h3>Sitelerim</h3>
-  <div id="mineList"></div>
-</div></div>
-
-<!-- Site görüntüleyici -->
-<div id="viewer">
-  <button id="vreport">⚑ Bildir</button>
-  <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+<div class="modal" id="mMenu">
+<div class="box">
+<h3>Menü</h3>
+<div class="hint" id="menuName"></div>
+<div class="row">
+<button class="btn primary" id="btnRename">Kullanıcı ismini değiştir</button>
+</div>
+</div>
 </div>
 
-<!-- Tek kapat tuşu: her açık ekranın sol üstünde -->
-<button class="x" id="xbtn" aria-label="Kapat">✕</button>
+<div class="modal" id="mName">
+<div class="box">
+<h3>Kullanıcı ismini değiştir</h3>
+<label>Kullanıcı adı</label>
+<input id="nName" maxlength="20">
+<div class="hint">3-20 karakter. Harf, rakam, _ . - kullanılabilir.</div>
+<div class="err" id="nErr"></div>
+<div class="row">
+<button class="btn primary" id="nSave">Kaydet</button>
+</div>
+</div>
+</div>
+
+<div class="modal" id="mEdit">
+<div class="box">
+<h3 id="eTitle">Site Oluştur</h3>
+<label>Site adı</label>
+<input id="eName" maxlength="40">
+<div class="hint" id="eLink"></div>
+<label>Kategori</label>
+<select id="eCat"></select>
+<label>Kod (HTML, CSS, JavaScript – tek dosya)</label>
+<textarea id="eCode" placeholder="<h1>Merhaba</h1>"></textarea>
+<div class="err" id="eErr"></div>
+<div class="row">
+<button class="btn primary" id="eSave">Kaydet</button>
+<button class="btn danger" id="eDel" style="display:none">Siteyi Sil</button>
+</div>
+</div>
+</div>
+
+<div class="modal" id="mMine">
+<div class="box">
+<h3>Sitelerim</h3>
+<div id="mineList"></div>
+</div>
+</div>
+
+<div id="viewer">
+<button id="vreport">⚑ Bildir</button>
+<iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
+</div>
+
+<button class="x" id="xbtn">✕</button>
 
 <script type="module">
+
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,getDocs,addDoc,query,where,orderBy,limit,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+getFirestore,collection,doc,getDoc,getDocs,addDoc,query,where,orderBy,limit,writeBatch,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC2mGkU1ZgjKPsvZ6piME4a0fLl2fhCVbk",
-  authDomain: "velora-b84fe.firebaseapp.com",
-  projectId: "velora-b84fe",
-  appId: "1:117334379566:web:d2accf78595b898e5023bf"
+apiKey:"AIzaSyC2mGkU1ZgjKPsvZ6piME4a0fLl2fhCVbk",
+authDomain:"velora-b84fe.firebaseapp.com",
+projectId:"velora-b84fe",
+appId:"1:117334379566:web:d2accf78595b898e5023bf"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const $ = id => document.getElementById(id);
-const CATS = ["Araba","Korku","Mafya","Oyun","Film","Müzik","Haber","Eğitim","Alışveriş","Sosyal","Teknoloji","Spor","Sanat","Diğer"];
-let user = null, myName = null, nameP = Promise.resolve(), all = [], activeCat = "Hepsi", editing = null, afterName = null;
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const $=id=>document.getElementById(id);
 
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const keyOf = s => s.trim().toLocaleLowerCase("tr").replace(/\s+/g,"-");
-const validKey = k => /^[a-z0-9ğüşöçı_-]{2,40}$/.test(k);
-const nameKey = s => s.trim().toLowerCase();
-const validName = k => /^[a-z0-9ğüşöçı][a-z0-9ğüşöçı_.-]{2,19}$/.test(k);
-const base = () => location.origin + location.pathname;
-const linkOf = k => base() + "#" + encodeURIComponent(k);
+const CATS=["Araba","Korku","Mafya","Oyun","Film","Müzik","Haber","Eğitim","Alışveriş","Sosyal","Teknoloji","Spor","Sanat","Diğer"];
 
-/* ---------- Kapat (X) yönetimi ---------- */
-let closer = null;
-function showX(fn){ closer = fn; $("xbtn").classList.add("show"); }
-function hideX(){ closer = null; $("xbtn").classList.remove("show"); }
-$("xbtn").onclick = () => { if(closer) closer(); };
-function openModal(id){ $(id).classList.add("open"); showX(() => closeModal(id)); }
-function closeModal(id){ $(id).classList.remove("open"); hideX(); }
+let user=null,myName=null,nameP=Promise.resolve(),all=[],activeCat="Hepsi",editing=null,afterName=null;
 
-/* ---------- Kategoriler / liste ---------- */
-$("eCat").innerHTML = CATS.map(c => `<option>${c}</option>`).join("");
-function drawChips(){
-  $("chips").innerHTML = ["Hepsi",...CATS].map(c => `<div class="chip ${c===activeCat?"on":""}" data-c="${c}">${c}</div>`).join("");
-  $("chips").querySelectorAll(".chip").forEach(el => el.onclick = () => { activeCat = el.dataset.c; drawChips(); render(); });
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const keyOf=s=>s.trim().toLocaleLowerCase("tr").replace(/\s+/g,"-");
+
+const validKey=k=>/^[a-z0-9ğüşöçı_-]{2,40}$/.test(k);
+
+const nameKey=s=>s.trim().toLowerCase();
+
+const validName=k=>/^[a-z0-9ğüşöçı][a-z0-9ğüşöçı_.-]{2,19}$/.test(k);
+
+const base=()=>location.origin+location.pathname;
+
+const linkOf=k=>base()+"#"+encodeURIComponent(k);
+
+
+/* =====================================
+   ÜCRETSİZ OTOMATİK İÇERİK ANALİZİ
+===================================== */
+
+// HTML kodundan görünür metinleri çıkarır.
+function extractContent(code){
+
+try{
+
+const parser=new DOMParser();
+const parsed=parser.parseFromString(code||"","text/html");
+
+parsed.querySelectorAll("script,style,noscript,svg,iframe,template").forEach(el=>el.remove());
+
+const parts=[];
+
+if(parsed.title) parts.push(parsed.title);
+
+const meta=parsed.querySelector('meta[name="description"]');
+if(meta) parts.push(meta.content);
+
+parsed.querySelectorAll("h1,h2,h3,h4,h5,h6,p,button,label,a,li,option,th,td").forEach(el=>{
+parts.push(el.textContent||"");
+});
+
+parsed.querySelectorAll("input,textarea").forEach(el=>{
+parts.push(el.getAttribute("placeholder")||"");
+parts.push(el.getAttribute("aria-label")||"");
+});
+
+parts.push(parsed.body?.innerText||parsed.body?.textContent||"");
+
+return parts.join(" ").replace(/\s+/g," ").slice(0,30000);
+
+}catch(e){
+
+return String(code||"").replace(/<[^>]*>/g," ").slice(0,30000);
+
 }
+
+}
+
+
+/* =====================================
+   TÜRKÇE KELİME NORMALİZASYONU
+===================================== */
+
+const stopWords=new Set([
+"ve","veya","ile","bir","bu","şu","o","da","de","mi","mı","mu","mü",
+"için","nasıl","ne","hangi","olan","olarak","ben","sen","biz","siz",
+"istiyorum","istiyor","eder","etmek","yapmak","bana","bunu","şey",
+"çok","daha","en","var","yok","gibi","ki","ama","fakat","ise"
+]);
+
+function normalizeWord(word){
+
+return word
+.toLocaleLowerCase("tr")
+.replace(/[^a-z0-9ğüşöçı]/g,"")
+.trim();
+
+}
+
+function stemWord(word){
+
+let w=normalizeWord(word);
+
+const suffixes=[
+"larından","lerinden","larımızdan","lerimizden",
+"larının","lerinin","larımız","lerimiz",
+"lardan","lerden","ların","lerin",
+"ları","leri","lardan","lerden",
+"dan","den","tan","ten",
+"dır","dir","dur","dür",
+"lık","lik","luk","lük",
+"lar","ler","ları","leri",
+"ım","im","um","üm",
+"ın","in","un","ün",
+"da","de","ta","te",
+"ı","i","u","ü","a","e"
+];
+
+for(const suffix of suffixes){
+
+if(w.length>suffix.length+3 && w.endsWith(suffix)){
+w=w.slice(0,-suffix.length);
+break;
+}
+
+}
+
+return w;
+
+}
+
+function tokenize(text){
+
+return String(text||"")
+.toLocaleLowerCase("tr")
+.match(/[a-z0-9ğüşöçı]+/gi)
+?.map(stemWord)
+.filter(w=>w.length>1&&!stopWords.has(w))||[];
+
+}
+
+
+/* =====================================
+   ANLAM BENZERLİĞİ SÖZLÜĞÜ
+===================================== */
+
+const synonymGroups=[
+
+["dil","lisan","yabancı dil"],
+["ingilizce","english"],
+["öğren","öğret","eğitim","ders","kurs","çalış"],
+["seviye","düzey","kademe","derece"],
+["ölç","test","sınav","sına","değerlendir","tespit","kontrol"],
+["bilgi","bilgi düzeyi","bilgi seviyesi"],
+["tamir","onarım","tadilat","arıza giderme","onar"],
+["televizyon","tv","ekran"],
+["bozul","arızalan","çalışmıyor","açılmıyor"],
+["bilgisayar","pc","laptop","notebook"],
+["telefon","cep telefonu","mobil"],
+["oyun","game","eğlence"],
+["müzik","şarkı","melodi","ses"],
+["film","sinema","dizi"],
+["alışveriş","satın al","ürün","mağaza"],
+["haber","gündem","son dakika"],
+["araba","otomobil","araç"],
+["yemek","tarif","pişir","mutfak"],
+["spor","antrenman","egzersiz","fitness"],
+["güvenlik","koruma","siber güvenlik","hacker"],
+["web","site","internet","sayfa"],
+["fotoğraf","resim","görsel","image"],
+["video","klip","kayıt"],
+["para","kazanç","gelir","ücret"],
+["hava","hava durumu","meteoroloji"],
+["çocuk","bebek","çocuklar"],
+["sağlık","doktor","hastalık","tedavi"]
+
+];
+
+const synonymMap=new Map();
+
+for(const group of synonymGroups){
+
+const words=group.flatMap(x=>tokenize(x));
+
+for(const word of words){
+
+if(!synonymMap.has(word)) synonymMap.set(word,new Set());
+
+words.forEach(other=>synonymMap.get(word).add(other));
+
+}
+
+}
+
+function expandTokens(tokens){
+
+const result=new Set(tokens);
+
+for(const token of tokens){
+
+const group=synonymMap.get(token);
+
+if(group) group.forEach(w=>result.add(w));
+
+}
+
+return [...result];
+
+}
+
+
+/* =====================================
+   SİTELERİN OTOMATİK ARAMA İNDEKSİ
+===================================== */
+
+function getSiteContent(site){
+
+const htmlText=extractContent(site.code);
+
+const title=site.name||"";
+const category=site.category||"";
+const description=site.description||"";
+const keywords=Array.isArray(site.keywords)?site.keywords.join(" "):"";
+
+const complete=[
+title,
+category,
+description,
+keywords,
+htmlText
+].join(" ");
+
+return {
+
+text:complete,
+
+tokens:tokenize(complete),
+
+expanded:expandTokens(tokenize(complete))
+
+};
+
+}
+
+
+/* =====================================
+   AKILLI ARAMA PUANLAMASI
+===================================== */
+
+function searchScore(site,query){
+
+const qTokens=tokenize(query);
+
+if(!qTokens.length) return 0;
+
+const index=getSiteContent(site);
+
+const queryExpanded=expandTokens(qTokens);
+
+const titleTokens=tokenize(site.name||"");
+const categoryTokens=tokenize(site.category||"");
+
+let score=0;
+let matched=0;
+
+for(const token of qTokens){
+
+let found=false;
+
+if(titleTokens.includes(token)){
+score+=12;
+found=true;
+}
+
+if(categoryTokens.includes(token)){
+score+=6;
+found=true;
+}
+
+if(index.tokens.includes(token)){
+score+=5;
+found=true;
+}
+
+// Eş anlamlı kelime kontrolü
+if(!found){
+
+const related=synonymMap.get(token);
+
+if(related){
+
+for(const relatedWord of related){
+
+if(index.tokens.includes(relatedWord)){
+score+=3;
+found=true;
+break;
+}
+
+}
+
+}
+
+}
+
+if(found) matched++;
+
+}
+
+// Genişletilmiş sorguyla ek eşleşmeler
+for(const token of queryExpanded){
+
+if(!qTokens.includes(token)&&index.expanded.includes(token)){
+score+=0.7;
+}
+
+}
+
+// Birden fazla kelime eşleşmesini ödüllendir
+const coverage=matched/qTokens.length;
+
+score*=0.5+coverage;
+
+return score;
+
+}
+
+function smartSearch(query,list){
+
+if(!query.trim()) return list;
+
+return list
+.map(site=>({
+site,
+score:searchScore(site,query)
+}))
+.filter(item=>item.score>0)
+.sort((a,b)=>b.score-a.score)
+.map(item=>({
+...item.site,
+_matchScore:item.score
+}));
+
+}
+
+
+/* =====================================
+   KAPAT BUTONU
+===================================== */
+
+let closer=null;
+
+function showX(fn){
+closer=fn;
+$("xbtn").classList.add("show");
+}
+
+function hideX(){
+closer=null;
+$("xbtn").classList.remove("show");
+}
+
+$("xbtn").onclick=()=>{
+if(closer) closer();
+};
+
+function openModal(id){
+$(id).classList.add("open");
+showX(()=>closeModal(id));
+}
+
+function closeModal(id){
+$(id).classList.remove("open");
+hideX();
+}
+
+
+/* =====================================
+   KATEGORİLER
+===================================== */
+
+$("eCat").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
+
+function drawChips(){
+
+$("chips").innerHTML=["Hepsi",...CATS].map(c=>
+`<div class="chip ${c===activeCat?"on":""}" data-c="${esc(c)}">${esc(c)}</div>`
+).join("");
+
+$("chips").querySelectorAll(".chip").forEach(el=>{
+
+el.onclick=()=>{
+activeCat=el.dataset.c;
+drawChips();
+render();
+};
+
+});
+
+}
+
 drawChips();
 
+
+/* =====================================
+   ARAMA SONUÇLARINI GÖSTER
+===================================== */
+
 function render(){
-  const raw = $("q").value.trim(), term = raw.toLocaleLowerCase("tr");
-  const list = all.filter(s => (activeCat==="Hepsi"||s.category===activeCat) &&
-    (!term || s.key.includes(keyOf(term)) || s.name.toLocaleLowerCase("tr").includes(term) || (s.ownerName||"").toLocaleLowerCase("tr").includes(term)));
-  $("listTitle").textContent = term ? `"${raw}" için sonuçlar` : "Keşfet";
-  $("grid").innerHTML = list.length ? list.map(s => `
-    <div class="card" data-k="${esc(s.key)}">
-      <div class="n">${esc(s.name)}</div>
-      <div class="l">${esc(linkOf(s.key))}</div>
-      <div class="m"><span>👤 ${esc(s.ownerName||"Anonim")}</span><span>${esc(s.category)}</span></div>
-    </div>`).join("") : `<div class="empty">Site bulunamadı.</div>`;
-  $("grid").querySelectorAll(".card").forEach(el => el.onclick = () => location.hash = el.dataset.k);
-}
-async function load(){
-  try{
-    const snap = await getDocs(query(collection(db,"sites"), orderBy("createdAt","desc"), limit(300)));
-    all = snap.docs.map(d => ({key:d.id, ...d.data()}));
-  }catch(e){ $("grid").innerHTML = `<div class="empty">Siteler yüklenemedi: ${esc(e.message)}</div>`; return; }
-  render();
+
+const raw=$("q").value.trim();
+
+let list=all.filter(s=>
+activeCat==="Hepsi"||s.category===activeCat
+);
+
+if(raw){
+
+list=smartSearch(raw,list);
+
 }
 
-/* ---------- Arama ---------- */
-$("searchForm").onsubmit = async e => {
-  e.preventDefault();
-  const v = $("q").value.trim();
-  if(v.includes("#")){ location.hash = v.split("#")[1]; return; }
-  render();
-  const k = keyOf(v);
-  if(validKey(k) && !all.some(s => s.key===k)){
-    const d = await getDoc(doc(db,"sites",k)).catch(()=>null);
-    if(d && d.exists()){ all.unshift({key:d.id,...d.data()}); render(); }
-  }
-};
-$("q").oninput = render;
+$("listTitle").textContent=raw
+? `"${raw}" için akıllı arama sonuçları`
+:"Keşfet";
 
-/* ---------- Giriş (butonsuz: gerektiğinde otomatik açılır) ---------- */
-async function loadMyName(){
-  try{ const d = await getDoc(doc(db,"users",user.uid)); myName = d.exists() ? d.data().name : null; }
-  catch(e){ myName = null; }
-}
-onAuthStateChanged(auth, u => {
-  const changed = !user || !u || user.uid !== u.uid;
-  user = u;
-  if(changed){ myName = null; nameP = u ? loadMyName() : Promise.resolve(); }
+$("grid").innerHTML=list.length
+?list.map(s=>`
+
+<div class="card" data-k="${esc(s.key)}">
+
+<div class="n">${esc(s.name)}</div>
+
+<div class="l">${esc(linkOf(s.key))}</div>
+
+<div class="m">
+<span>👤 ${esc(s.ownerName||"Anonim")}</span>
+<span>${esc(s.category||"Diğer")}</span>
+</div>
+
+${raw?`<div class="match">İçerik eşleşmesi bulundu</div>`:""}
+
+</div>
+
+`).join("")
+:`<div class="empty">İlgili site bulunamadı.</div>`;
+
+$("grid").querySelectorAll(".card").forEach(el=>{
+
+el.onclick=()=>location.hash=el.dataset.k;
+
 });
+
+}
+
+
+/* =====================================
+   FIREBASE SİTELERİNİ YÜKLE
+===================================== */
+
+async function load(){
+
+try{
+
+const snap=await getDocs(
+query(collection(db,"sites"),orderBy("createdAt","desc"),limit(300))
+);
+
+all=snap.docs.map(d=>({
+key:d.id,
+...d.data()
+}));
+
+render();
+
+}catch(e){
+
+$("grid").innerHTML=
+`<div class="empty">Siteler yüklenemedi: ${esc(e.message)}</div>`;
+
+}
+
+}
+
+
+/* =====================================
+   ARAMA
+===================================== */
+
+$("searchForm").onsubmit=async e=>{
+
+e.preventDefault();
+
+const v=$("q").value.trim();
+
+if(!v) return render();
+
+if(v.includes("#")){
+
+location.hash=v.split("#")[1];
+return;
+
+}
+
+render();
+
+const k=keyOf(v);
+
+if(validKey(k)&&!all.some(s=>s.key===k)){
+
+const d=await getDoc(doc(db,"sites",k)).catch(()=>null);
+
+if(d&&d.exists()){
+
+all.unshift({
+key:d.id,
+...d.data()
+});
+
+render();
+
+}
+
+}
+
+};
+
+$("q").oninput=render;
+
+
+/* =====================================
+   KULLANICI GİRİŞİ
+===================================== */
+
+async function loadMyName(){
+
+try{
+
+const d=await getDoc(doc(db,"users",user.uid));
+
+myName=d.exists()?d.data().name:null;
+
+}catch(e){
+
+myName=null;
+
+}
+
+}
+
+onAuthStateChanged(auth,u=>{
+
+const changed=!user||!u||user.uid!==u.uid;
+
+user=u;
+
+if(changed){
+
+myName=null;
+
+nameP=u?loadMyName():Promise.resolve();
+
+}
+
+});
+
 async function needLogin(){
-  if(!user){
-    try{
-      const r = await signInWithPopup(auth,new GoogleAuthProvider());
-      user = r.user; myName = null; nameP = loadMyName();
-    }catch(e){ alert("Devam etmek için giriş gerekli: "+e.message); return false; }
-  }
-  await nameP;
-  return true;
+
+if(!user){
+
+try{
+
+const r=await signInWithPopup(auth,new GoogleAuthProvider());
+
+user=r.user;
+myName=null;
+nameP=loadMyName();
+
+}catch(e){
+
+alert("Devam etmek için giriş gerekli: "+e.message);
+
+return false;
+
 }
 
-/* ---------- Menü / kullanıcı adı ---------- */
-$("btnMenu").onclick = () => {
-  $("menuName").textContent = myName ? "Kullanıcı adın: " + myName : "";
-  openModal("mMenu");
+}
+
+await nameP;
+
+return true;
+
+}
+
+
+/* =====================================
+   MENÜ VE KULLANICI ADI
+===================================== */
+
+$("btnMenu").onclick=()=>{
+
+$("menuName").textContent=myName?"Kullanıcı adın: "+myName:"";
+
+openModal("mMenu");
+
 };
+
 function openNameModal(after){
-  afterName = after || null;
-  $("nName").value = myName || "";
-  $("nErr").textContent = "";
-  openModal("mName");
+
+afterName=after||null;
+
+$("nName").value=myName||"";
+$("nErr").textContent="";
+
+openModal("mName");
+
 }
-$("btnRename").onclick = async () => {
-  if(!(await needLogin())) return;
-  closeModal("mMenu");
-  openNameModal(null);
-};
-$("nSave").onclick = async () => {
-  const raw = $("nName").value.trim(), key = nameKey(raw);
-  const err = m => $("nErr").textContent = m;
-  if(!validName(key)) return err("Kullanıcı adı 3-20 karakter olmalı; boşluk olmadan harf, rakam, _ . - kullanılabilir.");
-  if(!user) return err("Önce giriş yapmalısın.");
-  const oldKey = myName ? nameKey(myName) : null;
-  if(myName && raw === myName){ closeModal("mName"); return; }
-  $("nSave").disabled = true; err("");
-  try{
-    const ex = await getDoc(doc(db,"usernames",key));
-    if(ex.exists() && ex.data().uid !== user.uid){
-      err("Bu kullanıcı adı zaten alınmış. Başka bir ad dene.");
-      $("nSave").disabled = false; return;
-    }
-    const b = writeBatch(db);
-    if(ex.exists()) b.update(doc(db,"usernames",key), {name:raw});
-    else b.set(doc(db,"usernames",key), {uid:user.uid, name:raw});
-    if(oldKey && oldKey !== key) b.delete(doc(db,"usernames",oldKey));
-    b.set(doc(db,"users",user.uid), {name:raw, key});
-    const mine = await getDocs(query(collection(db,"sites"), where("owner","==",user.uid)));
-    mine.docs.slice(0,480).forEach(d => b.update(d.ref, {ownerName:raw}));
-    await b.commit();
-    myName = raw;
-    const cb = afterName; afterName = null;
-    closeModal("mName");
-    await load();
-    if(cb) cb();
-  }catch(e){
-    err(/permission/i.test(e.message) ? "Bu kullanıcı adı alınmış olabilir ya da kurallar eksik. Başka bir ad dene." : e.message);
-  }
-  $("nSave").disabled = false;
+
+$("btnRename").onclick=async()=>{
+
+if(!(await needLogin())) return;
+
+closeModal("mMenu");
+
+openNameModal(null);
+
 };
 
-/* ---------- Oluştur / düzenle ---------- */
+$("nSave").onclick=async()=>{
+
+const raw=$("nName").value.trim();
+const key=nameKey(raw);
+
+const err=m=>$("nErr").textContent=m;
+
+if(!validName(key))
+return err("Kullanıcı adı 3-20 karakter olmalı.");
+
+if(!user)
+return err("Önce giriş yapmalısın.");
+
+const oldKey=myName?nameKey(myName):null;
+
+if(myName&&raw===myName){
+closeModal("mName");
+return;
+}
+
+$("nSave").disabled=true;
+err("");
+
+try{
+
+const ex=await getDoc(doc(db,"usernames",key));
+
+if(ex.exists()&&ex.data().uid!==user.uid){
+
+err("Bu kullanıcı adı zaten alınmış.");
+$("nSave").disabled=false;
+return;
+
+}
+
+const b=writeBatch(db);
+
+if(ex.exists())
+b.update(doc(db,"usernames",key),{name:raw});
+else
+b.set(doc(db,"usernames",key),{uid:user.uid,name:raw});
+
+if(oldKey&&oldKey!==key)
+b.delete(doc(db,"usernames",oldKey));
+
+b.set(doc(db,"users",user.uid),{name:raw,key});
+
+const mine=await getDocs(
+query(collection(db,"sites"),where("owner","==",user.uid))
+);
+
+mine.docs.slice(0,480).forEach(d=>
+b.update(d.ref,{ownerName:raw})
+);
+
+await b.commit();
+
+myName=raw;
+
+const cb=afterName;
+afterName=null;
+
+closeModal("mName");
+
+await load();
+
+if(cb) cb();
+
+}catch(e){
+
+err(e.message);
+
+}
+
+$("nSave").disabled=false;
+
+};
+
+
+/* =====================================
+   SİTE OLUŞTUR / DÜZENLE
+===================================== */
+
 function openEdit(site){
-  editing = site || null;
-  $("eTitle").textContent = site ? "Site Ayarları" : "Site Oluştur";
-  $("eName").value = site ? site.name : "";
-  $("eCat").value = site ? site.category : CATS[0];
-  $("eCode").value = site ? site.code : "";
-  $("eDel").style.display = site ? "" : "none";
-  $("eErr").textContent = "";
-  updLink();
-  openModal("mEdit");
+
+editing=site||null;
+
+$("eTitle").textContent=site?"Site Ayarları":"Site Oluştur";
+
+$("eName").value=site?site.name:"";
+
+$("eCat").value=site?site.category||CATS[0]:CATS[0];
+
+$("eCode").value=site?site.code:"";
+
+$("eDel").style.display=site?"":"none";
+
+$("eErr").textContent="";
+
+updLink();
+
+openModal("mEdit");
+
 }
-function updLink(){ const k = keyOf($("eName").value); $("eLink").textContent = k ? "Bağlantı: " + linkOf(k) : ""; }
-$("eName").oninput = updLink;
-$("btnCreate").onclick = async () => {
-  if(!(await needLogin())) return;
-  if(!myName){ openNameModal(() => openEdit(null)); return; }
-  openEdit(null);
+
+function updLink(){
+
+const k=keyOf($("eName").value);
+
+$("eLink").textContent=k?"Bağlantı: "+linkOf(k):"";
+
+}
+
+$("eName").oninput=updLink;
+
+$("btnCreate").onclick=async()=>{
+
+if(!(await needLogin())) return;
+
+if(!myName){
+
+openNameModal(()=>openEdit(null));
+
+return;
+
+}
+
+openEdit(null);
+
 };
 
-$("eSave").onclick = async () => {
-  const name = $("eName").value.trim(), key = keyOf(name), code = $("eCode").value, category = $("eCat").value;
-  const err = m => $("eErr").textContent = m;
-  if(!validKey(key)) return err("Ad 2-40 karakter olmalı; harf, rakam, - ve _ kullanılabilir.");
-  if(!code.trim()) return err("Kod boş olamaz.");
-  if(code.length > 900000) return err("Kod çok uzun (en fazla ~900 KB).");
-  if(!(await needLogin())) return;
-  const owner = myName || user.displayName || "Anonim";
-  $("eSave").disabled = true; err("");
-  try{
-    const b = writeBatch(db);
-    if(!editing){
-      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:owner,createdAt:serverTimestamp()});
-    }else if(editing.key === key){
-      b.update(doc(db,"sites",key), {name,category,code});
-    }else{
-      b.set(doc(db,"sites",key), {name,category,code,owner:user.uid,ownerName:owner,createdAt:editing.createdAt||serverTimestamp()});
-      b.delete(doc(db,"sites",editing.key));
-    }
-    await b.commit();
-    const wasMine = $("mMine").classList.contains("open");
-    closeModal("mEdit"); editing = null;
-    await load();
-    if(wasMine){ drawMine(); openModal("mMine"); }
-  }catch(e){
-    err(/permission|exist|already/i.test(e.message) ? "Bu site adı zaten alınmış. Başka bir ad dene." : e.message);
-  }
-  $("eSave").disabled = false;
-};
-$("eDel").onclick = async () => {
-  if(!editing || !confirm("Bu site kalıcı olarak silinsin mi?")) return;
-  try{ await writeBatch(db).delete(doc(db,"sites",editing.key)).commit(); }catch(e){ return alert(e.message); }
-  closeModal("mEdit"); editing = null; await load(); drawMine(); openModal("mMine");
+
+/* =====================================
+   SİTE KAYDET
+===================================== */
+
+$("eSave").onclick=async()=>{
+
+const name=$("eName").value.trim();
+
+const key=keyOf(name);
+
+const code=$("eCode").value;
+
+const category=$("eCat").value;
+
+const err=m=>$("eErr").textContent=m;
+
+if(!validKey(key))
+return err("Ad 2-40 karakter olmalı.");
+
+if(!code.trim())
+return err("Kod boş olamaz.");
+
+if(code.length>900000)
+return err("Kod çok uzun.");
+
+if(!(await needLogin())) return;
+
+const owner=myName||user.displayName||"Anonim";
+
+$("eSave").disabled=true;
+
+err("");
+
+try{
+
+const b=writeBatch(db);
+
+if(!editing){
+
+b.set(doc(db,"sites",key),{
+
+name,
+category,
+code,
+owner:user.uid,
+ownerName:owner,
+createdAt:serverTimestamp()
+
+});
+
+}else if(editing.key===key){
+
+b.update(doc(db,"sites",key),{
+
+name,
+category,
+code
+
+});
+
+}else{
+
+const existing=await getDoc(doc(db,"sites",key));
+
+if(existing.exists()&&existing.data().owner!==user.uid){
+
+err("Bu site adı zaten alınmış.");
+
+$("eSave").disabled=false;
+
+return;
+
+}
+
+b.set(doc(db,"sites",key),{
+
+name,
+category,
+code,
+owner:user.uid,
+ownerName:owner,
+createdAt:editing.createdAt||serverTimestamp()
+
+});
+
+b.delete(doc(db,"sites",editing.key));
+
+}
+
+await b.commit();
+
+const wasMine=$("mMine").classList.contains("open");
+
+closeModal("mEdit");
+
+editing=null;
+
+await load();
+
+if(wasMine){
+
+drawMine();
+
+openModal("mMine");
+
+}
+
+}catch(e){
+
+err(/permission|exist|already/i.test(e.message)
+?"Bu site adı kullanılamıyor. Başka bir ad dene."
+:e.message);
+
+}
+
+$("eSave").disabled=false;
+
 };
 
-/* ---------- Sitelerim ---------- */
+
+/* =====================================
+   SİTE SİL
+===================================== */
+
+$("eDel").onclick=async()=>{
+
+if(!editing||!confirm("Bu site kalıcı olarak silinsin mi?"))
+return;
+
+try{
+
+await writeBatch(db)
+.delete(doc(db,"sites",editing.key))
+.commit();
+
+}catch(e){
+
+return alert(e.message);
+
+}
+
+closeModal("mEdit");
+
+editing=null;
+
+await load();
+
+drawMine();
+
+openModal("mMine");
+
+};
+
+
+/* =====================================
+   SİTELERİM
+===================================== */
+
 function drawMine(){
-  const mine = all.filter(s => user && s.owner === user.uid);
-  $("mineList").innerHTML = mine.length ? mine.map(s => `
-    <div class="mine"><div><div class="n">${esc(s.name)}</div><div class="l">${esc(linkOf(s.key))}</div></div>
-    <div style="display:flex;gap:6px"><button class="btn" data-o="${esc(s.key)}">Aç</button><button class="btn" data-s="${esc(s.key)}">Ayarlar</button></div></div>`).join("")
-    : `<div class="empty">Henüz sitenin yok.</div>`;
-  $("mineList").querySelectorAll("[data-o]").forEach(b => b.onclick = () => { closeModal("mMine"); location.hash = b.dataset.o; });
-  $("mineList").querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
-    const s = all.find(x => x.key===b.dataset.s);
-    $("mMine").classList.remove("open"); openEdit(s);
-    showX(() => { closeModal("mEdit"); editing = null; drawMine(); openModal("mMine"); });
-  });
-}
-$("btnMine").onclick = async () => { if(await needLogin()){ await load(); drawMine(); openModal("mMine"); } };
 
-/* ---------- Site görüntüleyici (tam ekran) ---------- */
-async function openSite(key){
-  key = decodeURIComponent(key);
-  let s = all.find(x => x.key===key);
-  if(!s){
-    const d = await getDoc(doc(db,"sites",key)).catch(()=>null);
-    if(d && d.exists()) s = {key:d.id,...d.data()};
-  }
-  if(!s){ alert("Site bulunamadı."); history.replaceState(null,"",location.pathname); return; }
-  $("frame").srcdoc = s.code;
-  $("viewer").classList.add("open");
-  $("viewer").dataset.k = key;
-  showX(() => { history.pushState(null,"",location.pathname); closeSite(); });
-}
-function closeSite(){ $("viewer").classList.remove("open"); $("frame").srcdoc = ""; hideX(); }
-$("vreport").onclick = async () => {
-  const reason = prompt("Bu siteyi neden bildiriyorsun?"); if(!reason) return;
-  try{ await addDoc(collection(db,"reports"), {site:$("viewer").dataset.k, reason:reason.slice(0,500), createdAt:serverTimestamp()}); alert("Bildirimin alındı."); }
-  catch(e){ alert(e.message); }
+const mine=all.filter(s=>user&&s.owner===user.uid);
+
+$("mineList").innerHTML=mine.length
+?mine.map(s=>`
+
+<div class="mine">
+
+<div>
+<div class="n">${esc(s.name)}</div>
+<div class="l">${esc(linkOf(s.key))}</div>
+</div>
+
+<div style="display:flex;gap:6px">
+
+<button class="btn" data-o="${esc(s.key)}">Aç</button>
+
+<button class="btn" data-s="${esc(s.key)}">Ayarlar</button>
+
+</div>
+
+</div>
+
+`).join("")
+:`<div class="empty">Henüz sitenin yok.</div>`;
+
+$("mineList").querySelectorAll("[data-o]").forEach(b=>{
+
+b.onclick=()=>{
+closeModal("mMine");
+location.hash=b.dataset.o;
 };
-function route(){ const h = location.hash.slice(1); h ? openSite(h) : closeSite(); }
-window.addEventListener("hashchange", route);
+
+});
+
+$("mineList").querySelectorAll("[data-s]").forEach(b=>{
+
+b.onclick=()=>{
+
+const s=all.find(x=>x.key===b.dataset.s);
+
+$("mMine").classList.remove("open");
+
+openEdit(s);
+
+showX(()=>{
+
+closeModal("mEdit");
+
+editing=null;
+
+drawMine();
+
+openModal("mMine");
+
+});
+
+};
+
+});
+
+}
+
+$("btnMine").onclick=async()=>{
+
+if(await needLogin()){
+
+await load();
+
+drawMine();
+
+openModal("mMine");
+
+}
+
+};
+
+
+/* =====================================
+   TAM EKRAN SİTE GÖRÜNTÜLEYİCİ
+===================================== */
+
+async function openSite(key){
+
+key=decodeURIComponent(key);
+
+let s=all.find(x=>x.key===key);
+
+if(!s){
+
+const d=await getDoc(doc(db,"sites",key)).catch(()=>null);
+
+if(d&&d.exists())
+s={key:d.id,...d.data()};
+
+}
+
+if(!s){
+
+alert("Site bulunamadı.");
+
+history.replaceState(null,"",location.pathname);
+
+return;
+
+}
+
+$("frame").srcdoc=s.code;
+
+$("viewer").classList.add("open");
+
+$("viewer").dataset.k=key;
+
+showX(()=>{
+
+history.pushState(null,"",location.pathname);
+
+closeSite();
+
+});
+
+}
+
+function closeSite(){
+
+$("viewer").classList.remove("open");
+
+$("frame").srcdoc="";
+
+hideX();
+
+}
+
+$("vreport").onclick=async()=>{
+
+const reason=prompt("Bu siteyi neden bildiriyorsun?");
+
+if(!reason) return;
+
+try{
+
+await addDoc(collection(db,"reports"),{
+
+site:$("viewer").dataset.k,
+reason:reason.slice(0,500),
+createdAt:serverTimestamp()
+
+});
+
+alert("Bildirimin alındı.");
+
+}catch(e){
+
+alert(e.message);
+
+}
+
+};
+
+function route(){
+
+const h=location.hash.slice(1);
+
+h?openSite(h):closeSite();
+
+}
+
+window.addEventListener("hashchange",route);
 
 load().then(route);
+
 </script>
 </body>
-</html>
+  </html>
