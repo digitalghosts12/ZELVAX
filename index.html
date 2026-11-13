@@ -11,6 +11,7 @@ html,body{height:100%;background:#0f1117;color:#e8eaf0;font-family:system-ui,-ap
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:10px}
+.headerLeft{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .hr{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn{background:#1d2130;border:1px solid #2c3247;border-radius:10px;padding:8px 14px;cursor:pointer;font-size:14px}
 .btn.primary{background:#6c5ce7;border-color:#6c5ce7;color:#fff}
@@ -18,6 +19,7 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px
 .btn:active{opacity:.7}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 #btnMenu{font-size:18px;padding:6px 14px;line-height:1.2}
+#btnAdminMenu{display:none;width:100%;background:#6c5ce7;border-color:#6c5ce7;color:#fff}
 .hero{text-align:center;padding:4px 14px 12px}
 .logo{font-size:40px;font-weight:800;letter-spacing:1px;background:linear-gradient(90deg,#a29bfe,#6c5ce7,#fd79a8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .search{display:flex;max-width:560px;margin:10px auto 0;background:#1d2130;border:1px solid #2c3247;border-radius:999px;overflow:hidden}
@@ -61,7 +63,11 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <body>
 
 <header>
+<div class="headerLeft">
 <button class="btn" id="btnMenu">☰</button>
+<button class="btn" id="btnAdminMenu">Admin Menüsü</button>
+</div>
+
 <div class="hr">
 <button class="btn" id="btnGames">Oyun</button>
 <button class="btn" id="btnMine">Sitelerim</button>
@@ -84,14 +90,25 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <div class="grid" id="grid"></div>
 </main>
 
-<!-- MENÜ -->
+<!-- AYARLAR -->
 <div class="modal" id="mMenu">
 <div class="box">
-<h3>Menü</h3>
+<h3>Ayarlar</h3>
 <div class="hint" id="menuName"></div>
 <div class="row">
 <button class="btn primary" id="btnRename">Kullanıcı ismini değiştir</button>
 </div>
+<div class="row">
+<button class="btn primary" id="btnAdmin">Admin</button>
+</div>
+<div class="err" id="adminErr"></div>
+</div>
+</div>
+
+<!-- ADMIN MENÜSÜ -->
+<div class="modal" id="mAdmin">
+<div class="box">
+<h3>Admin Menüsü</h3>
 </div>
 </div>
 
@@ -163,6 +180,9 @@ projectId:"velora-b84fe",
 appId:"1:117334379566:web:d2accf78595b898e5023bf"
 };
 
+/* BURAYA ADMIN E-POSTA ADRESİNİ YAZ */
+const ADMIN_EMAIL="ADMIN_EPOSTA_ADRESINI_BURAYA_YAZ";
+
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
@@ -171,6 +191,7 @@ const $=id=>document.getElementById(id);
 const CATS=["Araba","Korku","Mafya","Oyun","Film","Müzik","Haber","Eğitim","Alışveriş","Sosyal","Teknoloji","Spor","Sanat","Diğer"];
 
 let user=null,myName=null,nameP=Promise.resolve(),all=[],activeCat="Hepsi",editing=null,afterName=null;
+let isAdmin=false;
 
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -185,6 +206,65 @@ const validName=k=>/^[a-z0-9ğüşöçı][a-z0-9ğüşöçı_.-]{2,19}$/.test(k)
 const base=()=>location.origin+location.pathname;
 
 const linkOf=k=>base()+"#"+encodeURIComponent(k);
+
+
+/* ADMIN DURUMU */
+
+function setAdminMode(value){
+
+isAdmin=Boolean(value);
+
+$("btnAdminMenu").style.display=isAdmin?"block":"none";
+
+if(!isAdmin&&$("mAdmin").classList.contains("open")){
+closeModal("mAdmin");
+}
+
+}
+
+async function verifyAdmin(){
+
+$("adminErr").textContent="";
+
+if(!(await needLogin())) return false;
+
+try{
+
+await user.reload();
+
+const email=(user.email||"").trim().toLowerCase();
+const adminEmail=ADMIN_EMAIL.trim().toLowerCase();
+
+if(!adminEmail||adminEmail==="admin_eposta_adresini_buraya_yaz"){
+$("adminErr").textContent="Admin e-posta adresi henüz ayarlanmamış.";
+setAdminMode(false);
+return false;
+}
+
+if(!user.emailVerified){
+$("adminErr").textContent="Admin olmak için e-posta adresini doğrulamalısın.";
+setAdminMode(false);
+return false;
+}
+
+if(email!==adminEmail){
+$("adminErr").textContent="Bu Google hesabının admin yetkisi yok.";
+setAdminMode(false);
+return false;
+}
+
+setAdminMode(true);
+return true;
+
+}catch(e){
+
+$("adminErr").textContent="Doğrulama başarısız: "+e.message;
+setAdminMode(false);
+return false;
+
+}
+
+}
 
 
 /* OYUN BUTONU */
@@ -682,7 +762,7 @@ myName=null;
 
 }
 
-onAuthStateChanged(auth,u=>{
+onAuthStateChanged(auth,async u=>{
 
 const changed=!user||!u||user.uid!==u.uid;
 
@@ -691,12 +771,14 @@ user=u;
 if(changed){
 
 myName=null;
+setAdminMode(false);
 
 nameP=u?loadMyName():Promise.resolve();
 
 }
 
 });
+
 
 async function needLogin(){
 
@@ -727,7 +809,7 @@ return true;
 }
 
 
-/* MENÜ VE KULLANICI ADI */
+/* AYARLAR VE KULLANICI ADI */
 
 $("btnMenu").onclick=()=>{
 
@@ -736,6 +818,32 @@ $("menuName").textContent=myName?"Kullanıcı adın: "+myName:"";
 openModal("mMenu");
 
 };
+
+$("btnAdmin").onclick=async()=>{
+
+const success=await verifyAdmin();
+
+if(success){
+
+closeModal("mMenu");
+
+alert("Admin Modu etkinleştirildi.");
+
+}
+
+};
+
+$("btnAdminMenu").onclick=()=>{
+
+if(!isAdmin){
+setAdminMode(false);
+return;
+}
+
+openModal("mAdmin");
+
+};
+
 
 function openNameModal(after){
 
