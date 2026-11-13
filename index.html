@@ -51,6 +51,9 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 .mine{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #262b3d}
 .mine .n{font-weight:700;word-break:break-all}
 .mine .l{font-size:12px;color:#7f8bff;word-break:break-all}
+.adminItem{background:#0f1117;border:1px solid #2c3247;border-radius:10px;padding:10px;margin-top:9px;overflow-wrap:anywhere}
+.adminItem .row{margin-top:9px}
+.adminSection{border-top:1px solid #2c3247;padding-top:14px;margin-top:16px}
 .x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:200;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .x.show{display:flex}
 #viewer{position:fixed;inset:0;background:#fff;z-index:100;display:none}
@@ -90,7 +93,6 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <div class="grid" id="grid"></div>
 </main>
 
-<!-- AYARLAR -->
 <div class="modal" id="mMenu">
 <div class="box">
 <h3>Ayarlar</h3>
@@ -105,14 +107,40 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
-<!-- ADMIN MENÜSÜ -->
 <div class="modal" id="mAdmin">
 <div class="box">
 <h3>Admin Menüsü</h3>
+
+<div class="hint">Yönetici işlemleri</div>
+
+<div class="row">
+<button class="btn primary" id="adminRefresh">Yenile</button>
+</div>
+
+<div class="adminSection">
+<h3>Kullanıcılar</h3>
+<div id="adminUsers"><div class="empty">Yükleniyor...</div></div>
+</div>
+
+<div class="adminSection">
+<h3>Banlanan Kullanıcılar</h3>
+<div id="adminBanned"><div class="empty">Yükleniyor...</div></div>
+</div>
+
+<div class="adminSection">
+<h3>Yayındaki Siteler</h3>
+<div id="adminSites"><div class="empty">Yükleniyor...</div></div>
+</div>
+
+<div class="adminSection">
+<h3>Silinen Siteler</h3>
+<div id="adminDeleted"><div class="empty">Yükleniyor...</div></div>
+</div>
+
+<div class="err" id="adminActionErr"></div>
 </div>
 </div>
 
-<!-- KULLANICI ADI -->
 <div class="modal" id="mName">
 <div class="box">
 <h3>Kullanıcı ismini değiştir</h3>
@@ -126,7 +154,6 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
-<!-- SİTE DÜZENLEME -->
 <div class="modal" id="mEdit">
 <div class="box">
 <h3 id="eTitle">Site Oluştur</h3>
@@ -145,7 +172,6 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
-<!-- SİTELERİM -->
 <div class="modal" id="mMine">
 <div class="box">
 <h3>Sitelerim</h3>
@@ -153,7 +179,6 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 </div>
 </div>
 
-<!-- TAM EKRAN GÖRÜNTÜLEYİCİ -->
 <div id="viewer">
 <button id="vreport">⚑ Bildir</button>
 <iframe id="frame" sandbox="allow-scripts allow-forms allow-popups allow-modals"></iframe>
@@ -170,7 +195,7 @@ getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
-getFirestore,collection,doc,getDoc,getDocs,addDoc,query,where,orderBy,limit,writeBatch,serverTimestamp
+getFirestore,collection,doc,getDoc,getDocs,addDoc,query,where,orderBy,limit,writeBatch,serverTimestamp,setDoc,deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -179,9 +204,6 @@ authDomain:"velora-b84fe.firebaseapp.com",
 projectId:"velora-b84fe",
 appId:"1:117334379566:web:d2accf78595b898e5023bf"
 };
-
-/* BURAYA ADMIN E-POSTA ADRESİNİ YAZ */
-const ADMIN_EMAIL="mhrrmovamin60@gmail.com";
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
@@ -196,30 +218,19 @@ let isAdmin=false;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 const keyOf=s=>s.trim().toLocaleLowerCase("tr").replace(/\s+/g,"-");
-
 const validKey=k=>/^[a-z0-9ğüşöçı_-]{2,40}$/.test(k);
-
 const nameKey=s=>s.trim().toLowerCase();
-
 const validName=k=>/^[a-z0-9ğüşöçı][a-z0-9ğüşöçı_.-]{2,19}$/.test(k);
-
 const base=()=>location.origin+location.pathname;
-
 const linkOf=k=>base()+"#"+encodeURIComponent(k);
 
 
-/* ADMIN DURUMU */
+/* ADMIN KONTROLÜ */
 
 function setAdminMode(value){
-
 isAdmin=Boolean(value);
-
 $("btnAdminMenu").style.display=isAdmin?"block":"none";
-
-if(!isAdmin&&$("mAdmin").classList.contains("open")){
-closeModal("mAdmin");
-}
-
+if(!isAdmin&&$("mAdmin").classList.contains("open")) closeModal("mAdmin");
 }
 
 async function verifyAdmin(){
@@ -231,36 +242,309 @@ if(!(await needLogin())) return false;
 try{
 
 await user.reload();
+await user.getIdToken(true);
 
-const email=(user.email||"").trim().toLowerCase();
-const adminEmail=ADMIN_EMAIL.trim().toLowerCase();
+/*
+Admin kontrolü:
+Firestore Rules, deletedSites koleksiyonuna
+yalnızca yönetici hesabının erişmesine izin verir.
+HTML içinde yönetici e-postası bulunmaz.
+*/
 
-if(!adminEmail||adminEmail==="admin_eposta_adresini_buraya_yaz"){
-$("adminErr").textContent="Admin e-posta adresi henüz ayarlanmamış.";
-setAdminMode(false);
-return false;
-}
-
-if(!user.emailVerified){
-$("adminErr").textContent="Admin olmak için e-posta adresini doğrulamalısın.";
-setAdminMode(false);
-return false;
-}
-
-if(email!==adminEmail){
-$("adminErr").textContent="Bu Google hesabının admin yetkisi yok.";
-setAdminMode(false);
-return false;
-}
+await getDocs(query(collection(db,"deletedSites"),limit(1)));
 
 setAdminMode(true);
 return true;
 
 }catch(e){
 
-$("adminErr").textContent="Doğrulama başarısız: "+e.message;
 setAdminMode(false);
+$("adminErr").textContent="Admin yetkisi doğrulanamadı. Firebase erişimi reddetti.";
 return false;
+
+}
+
+}
+
+
+/* ADMIN VERİLERİ */
+
+async function adminLoad(){
+
+if(!isAdmin) return;
+
+$("adminActionErr").textContent="";
+
+$("adminUsers").innerHTML='<div class="empty">Yükleniyor...</div>';
+$("adminBanned").innerHTML='<div class="empty">Yükleniyor...</div>';
+$("adminSites").innerHTML='<div class="empty">Yükleniyor...</div>';
+$("adminDeleted").innerHTML='<div class="empty">Yükleniyor...</div>';
+
+try{
+
+const [usersSnap,bannedSnap,sitesSnap,deletedSnap]=await Promise.all([
+
+getDocs(query(collection(db,"users"),limit(300))),
+getDocs(query(collection(db,"bannedUsers"),limit(300))),
+getDocs(query(collection(db,"sites"),orderBy("createdAt","desc"),limit(300))),
+getDocs(query(collection(db,"deletedSites"),limit(300)))
+
+]);
+
+/* KULLANICILAR */
+
+$("adminUsers").innerHTML=usersSnap.empty
+?'<div class="empty">Kullanıcı bulunamadı.</div>'
+:usersSnap.docs.map(d=>{
+
+const data=d.data();
+const uid=d.id;
+const banned=bannedSnap.docs.some(x=>x.id===uid);
+
+return `
+<div class="adminItem">
+<div><b>${esc(data.name||"İsimsiz kullanıcı")}</b></div>
+<div class="hint">UID: ${esc(uid)}</div>
+<div class="row">
+${banned
+?'<button class="btn" disabled>Banlı</button>'
+:`<button class="btn danger" data-ban="${esc(uid)}">Banla</button>`}
+</div>
+</div>`;
+
+}).join("");
+
+/* BANLI KULLANICILAR */
+
+$("adminBanned").innerHTML=bannedSnap.empty
+?'<div class="empty">Banlanan kullanıcı yok.</div>'
+:bannedSnap.docs.map(d=>`
+
+<div class="adminItem">
+<div><b>${esc(d.data().name||"Kullanıcı")}</b></div>
+<div class="hint">UID: ${esc(d.id)}</div>
+<div class="row">
+<button class="btn primary" data-unban="${esc(d.id)}">Banı kaldır</button>
+</div>
+</div>
+
+`).join("");
+
+/* YAYINDAKİ SİTELER */
+
+$("adminSites").innerHTML=sitesSnap.empty
+?'<div class="empty">Yayınlanan site yok.</div>'
+:sitesSnap.docs.map(d=>`
+
+<div class="adminItem">
+<div><b>${esc(d.data().name||d.id)}</b></div>
+<div class="hint">Sahip: ${esc(d.data().ownerName||"Anonim")}</div>
+<div class="hint">Site kimliği: ${esc(d.id)}</div>
+<div class="row">
+<button class="btn danger" data-delete-site="${esc(d.id)}">Sil</button>
+</div>
+</div>
+
+`).join("");
+
+/* SİLİNEN SİTELER */
+
+$("adminDeleted").innerHTML=deletedSnap.empty
+?'<div class="empty">Silinen site yok.</div>'
+:deletedSnap.docs.map(d=>`
+
+<div class="adminItem">
+<div><b>${esc(d.data().name||d.id)}</b></div>
+<div class="hint">Site kimliği: ${esc(d.id)}</div>
+<div class="row">
+<button class="btn primary" data-restore-site="${esc(d.id)}">Geri getir</button>
+</div>
+</div>
+
+`).join("");
+
+bindAdminButtons();
+
+}catch(e){
+
+$("adminActionErr").textContent="Admin verileri yüklenemedi: "+e.message;
+
+}
+
+}
+
+function bindAdminButtons(){
+
+$("adminUsers").querySelectorAll("[data-ban]").forEach(b=>{
+b.onclick=()=>banUser(b.dataset.ban);
+});
+
+$("adminBanned").querySelectorAll("[data-unban]").forEach(b=>{
+b.onclick=()=>unbanUser(b.dataset.unban);
+});
+
+$("adminSites").querySelectorAll("[data-delete-site]").forEach(b=>{
+b.onclick=()=>adminDeleteSite(b.dataset.deleteSite);
+});
+
+$("adminDeleted").querySelectorAll("[data-restore-site]").forEach(b=>{
+b.onclick=()=>restoreSite(b.dataset.restoreSite);
+});
+
+}
+
+
+/* KULLANICI BANLAMA */
+
+async function banUser(uid){
+
+if(!isAdmin||!uid) return;
+
+if(uid===user.uid){
+alert("Kendi hesabını banlayamazsın.");
+return;
+}
+
+if(!confirm("Bu kullanıcıyı ZELVAX'tan banlamak istiyor musun?")) return;
+
+try{
+
+const userDoc=await getDoc(doc(db,"users",uid));
+const name=userDoc.exists()?userDoc.data().name:"Kullanıcı";
+
+await setDoc(doc(db,"bannedUsers",uid),{
+uid,
+name,
+bannedAt:serverTimestamp(),
+bannedBy:user.uid
+});
+
+alert("Kullanıcı banlandı.");
+
+await adminLoad();
+
+}catch(e){
+
+alert("Banlama başarısız: "+e.message);
+
+}
+
+}
+
+
+/* BAN KALDIRMA */
+
+async function unbanUser(uid){
+
+if(!isAdmin||!uid) return;
+
+if(!confirm("Bu kullanıcının banını kaldırmak istiyor musun?")) return;
+
+try{
+
+await deleteDoc(doc(db,"bannedUsers",uid));
+
+alert("Kullanıcının banı kaldırıldı.");
+
+await adminLoad();
+
+}catch(e){
+
+alert("Ban kaldırılamadı: "+e.message);
+
+}
+
+}
+
+
+/* SİTEYİ GERİ DÖNÜŞÜMLÜ SİLME */
+
+async function adminDeleteSite(key){
+
+if(!isAdmin||!key) return;
+
+if(!confirm("Bu site silinen sitelere taşınsın mı?")) return;
+
+try{
+
+const ref=doc(db,"sites",key);
+const snap=await getDoc(ref);
+
+if(!snap.exists()){
+alert("Site bulunamadı.");
+return;
+}
+
+const batch=writeBatch(db);
+
+batch.set(doc(db,"deletedSites",key),{
+...snap.data(),
+deletedAt:serverTimestamp(),
+deletedBy:user.uid
+});
+
+batch.delete(ref);
+
+await batch.commit();
+
+alert("Site silinen sitelere taşındı.");
+
+await load();
+await adminLoad();
+
+}catch(e){
+
+alert("Site silinemedi: "+e.message);
+
+}
+
+}
+
+
+/* SİTE GERİ GETİRME */
+
+async function restoreSite(key){
+
+if(!isAdmin||!key) return;
+
+if(!confirm("Bu siteyi tekrar yayınlamak istiyor musun?")) return;
+
+try{
+
+const deletedRef=doc(db,"deletedSites",key);
+const snap=await getDoc(deletedRef);
+
+if(!snap.exists()){
+alert("Silinen site bulunamadı.");
+return;
+}
+
+const data=snap.data();
+
+const {deletedAt,deletedBy,...siteData}=data;
+
+const existing=await getDoc(doc(db,"sites",key));
+
+if(existing.exists()){
+alert("Bu site kimliği zaten kullanılıyor.");
+return;
+}
+
+const batch=writeBatch(db);
+
+batch.set(doc(db,"sites",key),siteData);
+batch.delete(deletedRef);
+
+await batch.commit();
+
+alert("Site tekrar yayınlandı.");
+
+await load();
+await adminLoad();
+
+}catch(e){
+
+alert("Site geri getirilemedi: "+e.message);
 
 }
 
@@ -462,13 +746,9 @@ htmlText
 ].join(" ");
 
 return {
-
 text:complete,
-
 tokens:tokenize(complete),
-
 expanded:expandTokens(tokenize(complete))
-
 };
 
 }
@@ -635,9 +915,7 @@ activeCat==="Hepsi"||s.category===activeCat
 );
 
 if(raw){
-
 list=smartSearch(raw,list);
-
 }
 
 $("listTitle").textContent=raw
@@ -648,27 +926,20 @@ $("grid").innerHTML=list.length
 ?list.map(s=>`
 
 <div class="card" data-k="${esc(s.key)}">
-
 <div class="n">${esc(s.name)}</div>
-
 <div class="l">${esc(linkOf(s.key))}</div>
-
 <div class="m">
 <span>👤 ${esc(s.ownerName||"Anonim")}</span>
 <span>${esc(s.category||"Diğer")}</span>
 </div>
-
 ${raw?`<div class="match">İçerik eşleşmesi bulundu</div>`:""}
-
 </div>
 
 `).join("")
 :`<div class="empty">İlgili site bulunamadı.</div>`;
 
 $("grid").querySelectorAll(".card").forEach(el=>{
-
 el.onclick=()=>location.hash=el.dataset.k;
-
 });
 
 }
@@ -712,10 +983,8 @@ const v=$("q").value.trim();
 if(!v) return render();
 
 if(v.includes("#")){
-
 location.hash=v.split("#")[1];
 return;
-
 }
 
 render();
@@ -795,7 +1064,6 @@ nameP=loadMyName();
 }catch(e){
 
 alert("Devam etmek için giriş gerekli: "+e.message);
-
 return false;
 
 }
@@ -809,14 +1077,11 @@ return true;
 }
 
 
-/* AYARLAR VE KULLANICI ADI */
+/* AYARLAR VE ADMIN */
 
 $("btnMenu").onclick=()=>{
-
 $("menuName").textContent=myName?"Kullanıcı adın: "+myName:"";
-
 openModal("mMenu");
-
 };
 
 $("btnAdmin").onclick=async()=>{
@@ -824,16 +1089,13 @@ $("btnAdmin").onclick=async()=>{
 const success=await verifyAdmin();
 
 if(success){
-
 closeModal("mMenu");
-
 alert("Admin Modu etkinleştirildi.");
-
 }
 
 };
 
-$("btnAdminMenu").onclick=()=>{
+$("btnAdminMenu").onclick=async()=>{
 
 if(!isAdmin){
 setAdminMode(false);
@@ -841,9 +1103,14 @@ return;
 }
 
 openModal("mAdmin");
+await adminLoad();
 
 };
 
+$("adminRefresh").onclick=adminLoad;
+
+
+/* KULLANICI ADI */
 
 function openNameModal(after){
 
@@ -861,7 +1128,6 @@ $("btnRename").onclick=async()=>{
 if(!(await needLogin())) return;
 
 closeModal("mMenu");
-
 openNameModal(null);
 
 };
@@ -894,11 +1160,9 @@ try{
 const ex=await getDoc(doc(db,"usernames",key));
 
 if(ex.exists()&&ex.data().uid!==user.uid){
-
 err("Bu kullanıcı adı zaten alınmış.");
 $("nSave").disabled=false;
 return;
-
 }
 
 const b=writeBatch(db);
@@ -929,7 +1193,6 @@ const cb=afterName;
 afterName=null;
 
 closeModal("mName");
-
 await load();
 
 if(cb) cb();
@@ -952,19 +1215,13 @@ function openEdit(site){
 editing=site||null;
 
 $("eTitle").textContent=site?"Site Ayarları":"Site Oluştur";
-
 $("eName").value=site?site.name:"";
-
 $("eCat").value=site?site.category||CATS[0]:CATS[0];
-
 $("eCode").value=site?site.code:"";
-
 $("eDel").style.display=site?"":"none";
-
 $("eErr").textContent="";
 
 updLink();
-
 openModal("mEdit");
 
 }
@@ -972,7 +1229,6 @@ openModal("mEdit");
 function updLink(){
 
 const k=keyOf($("eName").value);
-
 $("eLink").textContent=k?"Bağlantı: "+linkOf(k):"";
 
 }
@@ -984,11 +1240,8 @@ $("btnCreate").onclick=async()=>{
 if(!(await needLogin())) return;
 
 if(!myName){
-
 openNameModal(()=>openEdit(null));
-
 return;
-
 }
 
 openEdit(null);
@@ -1001,11 +1254,8 @@ openEdit(null);
 $("eSave").onclick=async()=>{
 
 const name=$("eName").value.trim();
-
 const key=keyOf(name);
-
 const code=$("eCode").value;
-
 const category=$("eCat").value;
 
 const err=m=>$("eErr").textContent=m;
@@ -1024,7 +1274,6 @@ if(!(await needLogin())) return;
 const owner=myName||user.displayName||"Anonim";
 
 $("eSave").disabled=true;
-
 err("");
 
 try{
@@ -1034,24 +1283,20 @@ const b=writeBatch(db);
 if(!editing){
 
 b.set(doc(db,"sites",key),{
-
 name,
 category,
 code,
 owner:user.uid,
 ownerName:owner,
 createdAt:serverTimestamp()
-
 });
 
 }else if(editing.key===key){
 
 b.update(doc(db,"sites",key),{
-
 name,
 category,
 code
-
 });
 
 }else{
@@ -1059,24 +1304,18 @@ code
 const existing=await getDoc(doc(db,"sites",key));
 
 if(existing.exists()&&existing.data().owner!==user.uid){
-
 err("Bu site adı zaten alınmış.");
-
 $("eSave").disabled=false;
-
 return;
-
 }
 
 b.set(doc(db,"sites",key),{
-
 name,
 category,
 code,
 owner:user.uid,
 ownerName:owner,
 createdAt:editing.createdAt||serverTimestamp()
-
 });
 
 b.delete(doc(db,"sites",editing.key));
@@ -1088,17 +1327,13 @@ await b.commit();
 const wasMine=$("mMine").classList.contains("open");
 
 closeModal("mEdit");
-
 editing=null;
 
 await load();
 
 if(wasMine){
-
 drawMine();
-
 openModal("mMine");
-
 }
 
 }catch(e){
@@ -1114,18 +1349,17 @@ $("eSave").disabled=false;
 };
 
 
-/* SİTE SİL */
+/* KULLANICININ KENDİ SİTESİNİ SİLMESİ */
 
 $("eDel").onclick=async()=>{
 
-if(!editing||!confirm("Bu site kalıcı olarak silinsin mi?"))
-return;
+if(!editing||!confirm("Bu site kalıcı olarak silinsin mi?")) return;
 
 try{
 
-await writeBatch(db)
-.delete(doc(db,"sites",editing.key))
-.commit();
+const batch=writeBatch(db);
+batch.delete(doc(db,"sites",editing.key));
+await batch.commit();
 
 }catch(e){
 
@@ -1134,13 +1368,10 @@ return alert(e.message);
 }
 
 closeModal("mEdit");
-
 editing=null;
 
 await load();
-
 drawMine();
-
 openModal("mMine");
 
 };
@@ -1156,58 +1387,38 @@ $("mineList").innerHTML=mine.length
 ?mine.map(s=>`
 
 <div class="mine">
-
 <div>
 <div class="n">${esc(s.name)}</div>
 <div class="l">${esc(linkOf(s.key))}</div>
 </div>
-
 <div style="display:flex;gap:6px">
-
 <button class="btn" data-o="${esc(s.key)}">Aç</button>
-
 <button class="btn" data-s="${esc(s.key)}">Ayarlar</button>
-
 </div>
-
 </div>
 
 `).join("")
 :`<div class="empty">Henüz sitenin yok.</div>`;
 
 $("mineList").querySelectorAll("[data-o]").forEach(b=>{
-
 b.onclick=()=>{
 closeModal("mMine");
 location.hash=b.dataset.o;
 };
-
 });
 
 $("mineList").querySelectorAll("[data-s]").forEach(b=>{
-
 b.onclick=()=>{
-
 const s=all.find(x=>x.key===b.dataset.s);
-
 $("mMine").classList.remove("open");
-
 openEdit(s);
-
 showX(()=>{
-
 closeModal("mEdit");
-
 editing=null;
-
 drawMine();
-
 openModal("mMine");
-
 });
-
 };
-
 });
 
 }
@@ -1215,13 +1426,9 @@ openModal("mMine");
 $("btnMine").onclick=async()=>{
 
 if(await needLogin()){
-
 await load();
-
 drawMine();
-
 openModal("mMine");
-
 }
 
 };
@@ -1245,27 +1452,18 @@ s={key:d.id,...d.data()};
 }
 
 if(!s){
-
 alert("Site bulunamadı.");
-
 history.replaceState(null,"",location.pathname);
-
 return;
-
 }
 
 $("frame").srcdoc=s.code;
-
 $("viewer").classList.add("open");
-
 $("viewer").dataset.k=key;
 
 showX(()=>{
-
 history.pushState(null,"",location.pathname);
-
 closeSite();
-
 });
 
 }
@@ -1273,9 +1471,7 @@ closeSite();
 function closeSite(){
 
 $("viewer").classList.remove("open");
-
 $("frame").srcdoc="";
-
 hideX();
 
 }
@@ -1289,11 +1485,9 @@ if(!reason) return;
 try{
 
 await addDoc(collection(db,"reports"),{
-
 site:$("viewer").dataset.k,
 reason:reason.slice(0,500),
 createdAt:serverTimestamp()
-
 });
 
 alert("Bildirimin alındı.");
