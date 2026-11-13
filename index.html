@@ -51,9 +51,20 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 .mine{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #262b3d}
 .mine .n{font-weight:700;word-break:break-all}
 .mine .l{font-size:12px;color:#7f8bff;word-break:break-all}
-.adminItem{background:#0f1117;border:1px solid #2c3247;border-radius:10px;padding:10px;margin-top:9px;overflow-wrap:anywhere}
+.adminItem{position:relative;background:#0f1117;border:1px solid #2c3247;border-radius:10px;padding:12px;margin-top:9px;overflow-wrap:anywhere;user-select:none;-webkit-user-select:none;touch-action:pan-y}
 .adminItem .row{margin-top:9px}
+.adminItem.longPressed{border-color:#6c5ce7}
+.adminAction{position:absolute;top:8px;right:8px;z-index:3}
+.adminAction .btn{padding:6px 10px;font-size:12px}
 .adminSection{border-top:1px solid #2c3247;padding-top:14px;margin-top:16px}
+.adminNav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.adminNav .btn{width:100%;min-height:42px}
+.adminSubNav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.adminSubNav .btn{width:100%;min-height:42px}
+.adminPage{display:none}
+.adminPage.active{display:block}
+.adminBack{margin:12px 0 4px}
+.adminHelp{font-size:12px;color:#9aa0b4;margin-top:8px;line-height:1.5}
 .x{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:200;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.55);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 .x.show{display:flex}
 #viewer{position:fixed;inset:0;background:#fff;z-index:100;display:none}
@@ -110,31 +121,71 @@ h2{font-size:15px;color:#9aa0b4;margin:6px 2px 10px;font-weight:600}
 <div class="modal" id="mAdmin">
 <div class="box">
 <h3>Admin Menüsü</h3>
-
 <div class="hint">Yönetici işlemleri</div>
 
-<div class="row">
-<button class="btn primary" id="adminRefresh">Yenile</button>
+<div class="adminNav" id="adminNav">
+<button class="btn" id="adminRefresh">Yenile</button>
+<button class="btn" data-admin-page="users">Kullanıcılar</button>
+<button class="btn" data-admin-page="sites">Yayındaki Siteler</button>
+<button class="btn" data-admin-page="reports">Şikâyetler</button>
+<button class="btn primary" data-admin-page="banned">Banlananlar</button>
 </div>
 
+<div class="adminPage active" id="adminHome">
+<div class="adminHelp">Yönetmek istediğin bölümü seç. Kullanıcı veya site kartında işlem yapmak için 2 saniye basılı tut.</div>
+</div>
+
+<div class="adminPage" id="adminPageUsers">
+<button class="btn adminBack" data-admin-back>← Admin menüsüne dön</button>
 <div class="adminSection">
 <h3>Kullanıcılar</h3>
+<div class="adminHelp">Bir kullanıcı kartına 2 saniye basılı tutarak Banla seçeneğini açabilirsin.</div>
 <div id="adminUsers"><div class="empty">Yükleniyor...</div></div>
 </div>
-
-<div class="adminSection">
-<h3>Banlanan Kullanıcılar</h3>
-<div id="adminBanned"><div class="empty">Yükleniyor...</div></div>
 </div>
 
+<div class="adminPage" id="adminPageSites">
+<button class="btn adminBack" data-admin-back>← Admin menüsüne dön</button>
 <div class="adminSection">
 <h3>Yayındaki Siteler</h3>
+<div class="adminHelp">Bir site kartına 2 saniye basılı tutarak Kaldır seçeneğini açabilirsin.</div>
 <div id="adminSites"><div class="empty">Yükleniyor...</div></div>
 </div>
+</div>
 
+<div class="adminPage" id="adminPageReports">
+<button class="btn adminBack" data-admin-back>← Admin menüsüne dön</button>
 <div class="adminSection">
-<h3>Silinen Siteler</h3>
+<h3>Şikâyetler</h3>
+<div id="adminReports"><div class="empty">Yükleniyor...</div></div>
+</div>
+</div>
+
+<div class="adminPage" id="adminPageBanned">
+<button class="btn adminBack" data-admin-back>← Admin menüsüne dön</button>
+<h3 style="margin-top:14px">Banlananlar</h3>
+<div class="adminSubNav">
+<button class="btn" data-admin-page="bannedUsers">Banlanan Kullanıcılar</button>
+<button class="btn" data-admin-page="bannedSites">Banlanan Siteler</button>
+</div>
+</div>
+
+<div class="adminPage" id="adminPageBannedUsers">
+<button class="btn adminBack" data-admin-back>← Banlananlar menüsüne dön</button>
+<div class="adminSection">
+<h3>Banlanan Kullanıcılar</h3>
+<div class="adminHelp">Bir kullanıcı kartına 2 saniye basılı tutarak Aktifleştir seçeneğini açabilirsin.</div>
+<div id="adminBanned"><div class="empty">Yükleniyor...</div></div>
+</div>
+</div>
+
+<div class="adminPage" id="adminPageBannedSites">
+<button class="btn adminBack" data-admin-back>← Banlananlar menüsüne dön</button>
+<div class="adminSection">
+<h3>Banlanan Siteler</h3>
+<div class="adminHelp">Bir site kartına 2 saniye basılı tutarak Aktifleştir seçeneğini açabilirsin.</div>
 <div id="adminDeleted"><div class="empty">Yükleniyor...</div></div>
+</div>
 </div>
 
 <div class="err" id="adminActionErr"></div>
@@ -244,13 +295,6 @@ try{
 await user.reload();
 await user.getIdToken(true);
 
-/*
-Admin kontrolü:
-Firestore Rules, deletedSites koleksiyonuna
-yalnızca yönetici hesabının erişmesine izin verir.
-HTML içinde yönetici e-postası bulunmaz.
-*/
-
 await getDocs(query(collection(db,"deletedSites"),limit(1)));
 
 setAdminMode(true);
@@ -267,6 +311,143 @@ return false;
 }
 
 
+/* ADMIN SAYFA GEÇİŞLERİ */
+
+const adminPages={
+home:"adminHome",
+users:"adminPageUsers",
+sites:"adminPageSites",
+reports:"adminPageReports",
+banned:"adminPageBanned",
+bannedUsers:"adminPageBannedUsers",
+bannedSites:"adminPageBannedSites"
+};
+
+function showAdminPage(page){
+
+Object.values(adminPages).forEach(id=>{
+$(id).classList.remove("active");
+});
+
+const target=adminPages[page]||adminPages.home;
+$(target).classList.add("active");
+
+}
+
+$("adminNav").querySelectorAll("[data-admin-page]").forEach(button=>{
+button.addEventListener("click",()=>{
+showAdminPage(button.dataset.adminPage);
+});
+});
+
+document.querySelectorAll("[data-admin-back]").forEach(button=>{
+button.addEventListener("click",()=>{
+const current=document.querySelector(".adminPage.active");
+if(current&&current.id==="adminPageBannedUsers"||current&&current.id==="adminPageBannedSites"){
+showAdminPage("banned");
+}else{
+showAdminPage("home");
+}
+});
+});
+
+
+/* 2 SANİYELİK BASILI TUTMA SİSTEMİ */
+
+function enableLongPress(container){
+
+let timer=null;
+let activeCard=null;
+let startX=0;
+let startY=0;
+let triggered=false;
+
+function clearPress(){
+
+if(timer){
+clearTimeout(timer);
+timer=null;
+}
+
+activeCard=null;
+
+}
+
+container.addEventListener("pointerdown",event=>{
+
+const card=event.target.closest(".adminItem");
+
+if(!card||event.target.closest("button")) return;
+
+clearPress();
+
+activeCard=card;
+triggered=false;
+startX=event.clientX;
+startY=event.clientY;
+
+timer=setTimeout(()=>{
+
+if(!activeCard) return;
+
+triggered=true;
+
+container.querySelectorAll(".adminItem.longPressed").forEach(item=>{
+item.classList.remove("longPressed");
+});
+
+activeCard.classList.add("longPressed");
+
+const action=activeCard.querySelector(".adminAction");
+if(action) action.style.display="block";
+
+},2000);
+
+});
+
+container.addEventListener("pointermove",event=>{
+
+if(!activeCard||!timer) return;
+
+const dx=Math.abs(event.clientX-startX);
+const dy=Math.abs(event.clientY-startY);
+
+if(dx>12||dy>12) clearPress();
+
+});
+
+["pointerup","pointercancel","pointerleave"].forEach(type=>{
+container.addEventListener(type,clearPress);
+});
+
+container.addEventListener("contextmenu",event=>{
+if(event.target.closest(".adminItem")) event.preventDefault();
+});
+
+}
+
+
+/* ADMIN KARTLARI */
+
+function adminCard({title,details="",actionText="",actionClass="primary",actionAttribute="",actionValue=""}){
+
+const action=actionText
+?`<div class="adminAction" style="display:none">
+<button class="btn ${actionClass}" ${actionAttribute}="${esc(actionValue)}">${esc(actionText)}</button>
+</div>`
+:"";
+
+return `
+<div class="adminItem">
+${action}
+<div><b>${esc(title)}</b></div>
+${details?`<div class="hint">${details}</div>`:""}
+</div>
+`;
+
+}
+
+
 /* ADMIN VERİLERİ */
 
 async function adminLoad(){
@@ -275,93 +456,127 @@ if(!isAdmin) return;
 
 $("adminActionErr").textContent="";
 
-$("adminUsers").innerHTML='<div class="empty">Yükleniyor...</div>';
-$("adminBanned").innerHTML='<div class="empty">Yükleniyor...</div>';
-$("adminSites").innerHTML='<div class="empty">Yükleniyor...</div>';
-$("adminDeleted").innerHTML='<div class="empty">Yükleniyor...</div>';
+const ids=["adminUsers","adminBanned","adminSites","adminDeleted","adminReports"];
+
+ids.forEach(id=>{
+$(id).innerHTML='<div class="empty">Yükleniyor...</div>';
+});
 
 try{
 
-const [usersSnap,bannedSnap,sitesSnap,deletedSnap]=await Promise.all([
+const [usersSnap,bannedSnap,sitesSnap,deletedSnap,reportsSnap]=await Promise.all([
 
 getDocs(query(collection(db,"users"),limit(300))),
 getDocs(query(collection(db,"bannedUsers"),limit(300))),
 getDocs(query(collection(db,"sites"),orderBy("createdAt","desc"),limit(300))),
-getDocs(query(collection(db,"deletedSites"),limit(300)))
+getDocs(query(collection(db,"deletedSites"),limit(300))),
+getDocs(query(collection(db,"reports"),limit(300)))
 
 ]);
 
+const bannedIds=new Set(bannedSnap.docs.map(d=>d.id));
+
 /* KULLANICILAR */
 
-$("adminUsers").innerHTML=usersSnap.empty
-?'<div class="empty">Kullanıcı bulunamadı.</div>'
-:usersSnap.docs.map(d=>{
+const normalUsers=usersSnap.docs.filter(d=>!bannedIds.has(d.id));
+
+$("adminUsers").innerHTML=normalUsers.length
+?normalUsers.map(d=>{
 
 const data=d.data();
 const uid=d.id;
-const banned=bannedSnap.docs.some(x=>x.id===uid);
 
-return `
-<div class="adminItem">
-<div><b>${esc(data.name||"İsimsiz kullanıcı")}</b></div>
-<div class="hint">UID: ${esc(uid)}</div>
-<div class="row">
-${banned
-?'<button class="btn" disabled>Banlı</button>'
-:`<button class="btn danger" data-ban="${esc(uid)}">Banla</button>`}
-</div>
-</div>`;
+return adminCard({
+title:data.name||"İsimsiz kullanıcı",
+details:"UID: "+esc(uid),
+actionText:"Banla",
+actionClass:"danger",
+actionAttribute:"data-ban",
+actionValue:uid
+});
 
-}).join("");
+}).join("")
+:'<div class="empty">Kullanıcı bulunamadı.</div>';
 
-/* BANLI KULLANICILAR */
+
+/* BANLANAN KULLANICILAR */
 
 $("adminBanned").innerHTML=bannedSnap.empty
 ?'<div class="empty">Banlanan kullanıcı yok.</div>'
-:bannedSnap.docs.map(d=>`
+:bannedSnap.docs.map(d=>{
 
-<div class="adminItem">
-<div><b>${esc(d.data().name||"Kullanıcı")}</b></div>
-<div class="hint">UID: ${esc(d.id)}</div>
-<div class="row">
-<button class="btn primary" data-unban="${esc(d.id)}">Banı kaldır</button>
-</div>
-</div>
+const data=d.data();
 
-`).join("");
+return adminCard({
+title:data.name||"Kullanıcı",
+details:"UID: "+esc(d.id),
+actionText:"Aktifleştir",
+actionClass:"primary",
+actionAttribute:"data-unban",
+actionValue:d.id
+});
+
+}).join("");
+
 
 /* YAYINDAKİ SİTELER */
 
 $("adminSites").innerHTML=sitesSnap.empty
 ?'<div class="empty">Yayınlanan site yok.</div>'
-:sitesSnap.docs.map(d=>`
+:sitesSnap.docs.map(d=>{
 
-<div class="adminItem">
-<div><b>${esc(d.data().name||d.id)}</b></div>
-<div class="hint">Sahip: ${esc(d.data().ownerName||"Anonim")}</div>
-<div class="hint">Site kimliği: ${esc(d.id)}</div>
-<div class="row">
-<button class="btn danger" data-delete-site="${esc(d.id)}">Sil</button>
-</div>
-</div>
+const data=d.data();
 
-`).join("");
+return adminCard({
+title:data.name||d.id,
+details:"Sahip: "+esc(data.ownerName||"Anonim")+"<br>Site kimliği: "+esc(d.id),
+actionText:"Kaldır",
+actionClass:"danger",
+actionAttribute:"data-delete-site",
+actionValue:d.id
+});
 
-/* SİLİNEN SİTELER */
+}).join("");
+
+
+/* BANLANAN SİTELER */
 
 $("adminDeleted").innerHTML=deletedSnap.empty
-?'<div class="empty">Silinen site yok.</div>'
-:deletedSnap.docs.map(d=>`
+?'<div class="empty">Banlanan site yok.</div>'
+:deletedSnap.docs.map(d=>{
 
+const data=d.data();
+
+return adminCard({
+title:data.name||d.id,
+details:"Site kimliği: "+esc(d.id)+"<br>Sahip: "+esc(data.ownerName||"Anonim"),
+actionText:"Aktifleştir",
+actionClass:"primary",
+actionAttribute:"data-restore-site",
+actionValue:d.id
+});
+
+}).join("");
+
+
+/* ŞİKÂYETLER */
+
+$("adminReports").innerHTML=reportsSnap.empty
+?'<div class="empty">Şikâyet bulunamadı.</div>'
+:reportsSnap.docs.map(d=>{
+
+const data=d.data();
+
+return `
 <div class="adminItem">
-<div><b>${esc(d.data().name||d.id)}</b></div>
-<div class="hint">Site kimliği: ${esc(d.id)}</div>
-<div class="row">
-<button class="btn primary" data-restore-site="${esc(d.id)}">Geri getir</button>
+<div><b>Site: ${esc(data.site||"Bilinmiyor")}</b></div>
+<div class="hint">${esc(data.reason||"Açıklama yok")}</div>
+<div class="hint">Şikâyet ID: ${esc(d.id)}</div>
 </div>
-</div>
+`;
 
-`).join("");
+}).join("");
+
 
 bindAdminButtons();
 
@@ -373,22 +588,26 @@ $("adminActionErr").textContent="Admin verileri yüklenemedi: "+e.message;
 
 }
 
+
 function bindAdminButtons(){
 
-$("adminUsers").querySelectorAll("[data-ban]").forEach(b=>{
-b.onclick=()=>banUser(b.dataset.ban);
+const bindings=[
+["adminUsers","[data-ban]",button=>banUser(button.dataset.ban)],
+["adminBanned","[data-unban]",button=>unbanUser(button.dataset.unban)],
+["adminSites","[data-delete-site]",button=>adminDeleteSite(button.dataset.deleteSite)],
+["adminDeleted","[data-restore-site]",button=>restoreSite(button.dataset.restoreSite)]
+];
+
+bindings.forEach(([containerId,selector,handler])=>{
+
+const container=$(containerId);
+
+container.querySelectorAll(selector).forEach(button=>{
+button.onclick=handler;
 });
 
-$("adminBanned").querySelectorAll("[data-unban]").forEach(b=>{
-b.onclick=()=>unbanUser(b.dataset.unban);
-});
+enableLongPress(container);
 
-$("adminSites").querySelectorAll("[data-delete-site]").forEach(b=>{
-b.onclick=()=>adminDeleteSite(b.dataset.deleteSite);
-});
-
-$("adminDeleted").querySelectorAll("[data-restore-site]").forEach(b=>{
-b.onclick=()=>restoreSite(b.dataset.restoreSite);
 });
 
 }
@@ -457,13 +676,13 @@ alert("Ban kaldırılamadı: "+e.message);
 }
 
 
-/* SİTEYİ GERİ DÖNÜŞÜMLÜ SİLME */
+/* SİTEYİ GERİ DÖNÜŞÜMLÜ KALDIRMA */
 
 async function adminDeleteSite(key){
 
 if(!isAdmin||!key) return;
 
-if(!confirm("Bu site silinen sitelere taşınsın mı?")) return;
+if(!confirm("Bu site yayınlanan sitelerden kaldırılıp Banlanan Siteler bölümüne taşınsın mı?")) return;
 
 try{
 
@@ -487,21 +706,21 @@ batch.delete(ref);
 
 await batch.commit();
 
-alert("Site silinen sitelere taşındı.");
+alert("Site yayından kaldırıldı.");
 
 await load();
 await adminLoad();
 
 }catch(e){
 
-alert("Site silinemedi: "+e.message);
+alert("Site kaldırılamadı: "+e.message);
 
 }
 
 }
 
 
-/* SİTE GERİ GETİRME */
+/* SİTEYİ AKTİFLEŞTİRME */
 
 async function restoreSite(key){
 
@@ -515,7 +734,7 @@ const deletedRef=doc(db,"deletedSites",key);
 const snap=await getDoc(deletedRef);
 
 if(!snap.exists()){
-alert("Silinen site bulunamadı.");
+alert("Banlanan site bulunamadı.");
 return;
 }
 
@@ -544,7 +763,7 @@ await adminLoad();
 
 }catch(e){
 
-alert("Site geri getirilemedi: "+e.message);
+alert("Site aktifleştirilemedi: "+e.message);
 
 }
 
@@ -1090,6 +1309,7 @@ const success=await verifyAdmin();
 
 if(success){
 closeModal("mMenu");
+showAdminPage("home");
 alert("Admin Modu etkinleştirildi.");
 }
 
@@ -1102,12 +1322,16 @@ setAdminMode(false);
 return;
 }
 
+showAdminPage("home");
 openModal("mAdmin");
 await adminLoad();
 
 };
 
-$("adminRefresh").onclick=adminLoad;
+$("adminRefresh").onclick=async()=>{
+await adminLoad();
+alert("Admin verileri yenilendi.");
+};
 
 
 /* KULLANICI ADI */
